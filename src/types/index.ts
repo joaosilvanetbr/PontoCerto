@@ -9,6 +9,7 @@ export interface TimeEntry {
 }
 
 export interface UserProfile {
+  id: number;
   name: string;
   company?: string;
   role?: string;

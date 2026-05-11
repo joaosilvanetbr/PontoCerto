@@ -38,17 +38,17 @@ export default function Modal({ id, title, children, onClose, showClose = true }
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-            className="relative bg-[#1E293B] rounded-2xl p-6 w-[90%] max-w-[320px] z-10"
+            className="relative bg-app-card rounded-2xl p-6 w-[90%] max-w-[320px] z-10"
           >
             {showClose && (
               <button
                 onClick={handleClose}
-                className="absolute top-4 right-4 text-[#64748B] hover:text-[#F1F5F9] transition-colors"
+                className="absolute top-4 right-4 text-app-muted hover:text-app transition-colors"
               >
                 <X size={18} />
               </button>
             )}
-            <h3 className="text-lg font-semibold text-[#F1F5F9] mb-4">{title}</h3>
+            <h3 className="text-lg font-semibold text-app mb-4">{title}</h3>
             {children}
           </motion.div>
         </motion.div>

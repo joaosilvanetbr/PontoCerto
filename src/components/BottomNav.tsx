@@ -14,7 +14,7 @@ export default function BottomNav() {
   const navigate = useNavigate();
 
   return (
-    <nav className="shrink-0 h-[72px] bg-[#0F172A] border-t border-[#334155] z-50 relative">
+    <nav className="shrink-0 h-[72px] bg-app border-t border-app z-50 relative">
       <div className="flex justify-around items-center h-full">
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.path;
@@ -35,13 +35,13 @@ export default function BottomNav() {
               <div className={isActive ? 'drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]' : ''}>
                 <Icon
                   size={24}
-                  className={isActive ? 'text-emerald-500' : 'text-[#64748B]'}
+                  className={isActive ? 'text-emerald-500' : 'text-app-muted'}
                   strokeWidth={isActive ? 2.5 : 1.5}
                 />
               </div>
               <span
                 className={`text-[11px] font-semibold tracking-wide ${
-                  isActive ? 'text-emerald-500' : 'text-[#64748B]'
+                  isActive ? 'text-emerald-500' : 'text-app-muted'
                 }`}
               >
                 {tab.label}

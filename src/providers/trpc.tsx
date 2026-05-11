@@ -18,9 +18,8 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
         httpBatchLink({
           url: `${getBaseUrl()}/api/trpc`,
           transformer: superjson,
-          headers() {
-            const token = localStorage.getItem("pontocerto_token");
-            return token ? { Authorization: `Bearer ${token}` } : {};
+          fetch(url, options) {
+            return fetch(url, { ...options, credentials: "include" });
           },
         }),
       ],

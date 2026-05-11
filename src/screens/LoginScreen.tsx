@@ -34,11 +34,8 @@ export default function LoginScreen() {
     setIsSubmitting(true);
     setError("");
     try {
-      const result = await login.mutateAsync({ username: username.trim(), password });
-      if (result.token) {
-        localStorage.setItem("pontocerto_token", result.token);
-        dispatch({ type: "SET_AUTH", payload: true });
-      }
+      await login.mutateAsync({ username: username.trim(), password });
+      dispatch({ type: "SET_AUTH", payload: true });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao fazer login";
       setError(message);
@@ -69,11 +66,8 @@ export default function LoginScreen() {
         name: regName.trim(),
       });
       // Auto login after register
-      const result = await login.mutateAsync({ username: regUsername.trim(), password: regPassword });
-      if (result.token) {
-        localStorage.setItem("pontocerto_token", result.token);
-        dispatch({ type: "SET_AUTH", payload: true });
-      }
+      await login.mutateAsync({ username: regUsername.trim(), password: regPassword });
+      dispatch({ type: "SET_AUTH", payload: true });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao criar conta";
       setError(message);
@@ -88,7 +82,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0F172A] relative overflow-hidden">
+    <div className="flex flex-col h-full bg-app relative overflow-hidden">
       {/* Animated background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -125,7 +119,7 @@ export default function LoginScreen() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-[28px] font-bold text-[#F1F5F9] tracking-tight"
+            className="text-[28px] font-bold text-app tracking-tight"
           >
             Ponto<span className="text-emerald-500">Certo</span>
           </motion.h1>
@@ -134,7 +128,7 @@ export default function LoginScreen() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="text-[13px] text-[#94A3B8] mt-1 tracking-wide"
+            className="text-[13px] text-app-secondary mt-1 tracking-wide"
           >
             Seu controle de ponto, simples assim
           </motion.p>
@@ -157,7 +151,7 @@ export default function LoginScreen() {
             ) : (
               <UserPlus size={18} className="text-emerald-500" />
             )}
-            <span className="text-[14px] text-[#94A3B8]">
+            <span className="text-[14px] text-app-secondary">
               {isSubmitting ? "Processando..." : mode === "login" ? "Entre na sua conta" : "Crie sua conta"}
             </span>
           </div>
@@ -174,31 +168,31 @@ export default function LoginScreen() {
               >
                 <div>
                   <div className="relative">
-                    <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#64748B]" />
+                    <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
                     <input
                       type="text"
                       placeholder="Usuario"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      className="w-full h-12 bg-[#1E293B] border border-[#334155] rounded-xl pl-10 pr-4 text-[#F1F5F9] text-[15px] placeholder:text-[#64748B] focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full h-12 bg-app-card border border-app rounded-xl pl-10 pr-4 text-app text-[15px] placeholder:text-app-muted focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
                 </div>
                 <div>
                   <div className="relative">
-                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#64748B]" />
+                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
                     <input
                       type={showPassword ? "text" : "password"}
                       placeholder="Senha"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                      className="w-full h-12 bg-[#1E293B] border border-[#334155] rounded-xl pl-10 pr-10 text-[#F1F5F9] text-[15px] placeholder:text-[#64748B] focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full h-12 bg-app-card border border-app rounded-xl pl-10 pr-10 text-app text-[15px] placeholder:text-app-muted focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#94A3B8]"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-secondary"
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -226,7 +220,7 @@ export default function LoginScreen() {
                   placeholder="Usuario"
                   value={regUsername}
                   onChange={(e) => setRegUsername(e.target.value)}
-                  className="w-full h-11 bg-[#1E293B] border border-[#334155] rounded-xl px-4 text-[#F1F5F9] text-[14px] placeholder:text-[#64748B] focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full h-11 bg-app-card border border-app rounded-xl px-4 text-app text-[14px] placeholder:text-app-muted focus:outline-none focus:border-emerald-500 transition-colors"
                 />
                 <div className="relative">
                   <input
@@ -234,12 +228,12 @@ export default function LoginScreen() {
                     placeholder="Senha (min 6 caracteres)"
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
-                    className="w-full h-11 bg-[#1E293B] border border-[#334155] rounded-xl px-4 pr-10 text-[#F1F5F9] text-[14px] placeholder:text-[#64748B] focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full h-11 bg-app-card border border-app rounded-xl px-4 pr-10 text-app text-[14px] placeholder:text-app-muted focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#94A3B8]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-secondary"
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
@@ -249,14 +243,14 @@ export default function LoginScreen() {
                   placeholder="Confirmar senha"
                   value={regConfirmPassword}
                   onChange={(e) => setRegConfirmPassword(e.target.value)}
-                  className="w-full h-11 bg-[#1E293B] border border-[#334155] rounded-xl px-4 text-[#F1F5F9] text-[14px] placeholder:text-[#64748B] focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full h-11 bg-app-card border border-app rounded-xl px-4 text-app text-[14px] placeholder:text-app-muted focus:outline-none focus:border-emerald-500 transition-colors"
                 />
                 <input
                   type="text"
                   placeholder="Seu nome"
                   value={regName}
                   onChange={(e) => setRegName(e.target.value)}
-                  className="w-full h-11 bg-[#1E293B] border border-[#334155] rounded-xl px-4 text-[#F1F5F9] text-[14px] placeholder:text-[#64748B] focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full h-11 bg-app-card border border-app rounded-xl px-4 text-app text-[14px] placeholder:text-app-muted focus:outline-none focus:border-emerald-500 transition-colors"
                 />
                 <button
                   onClick={handleRegister}
@@ -287,7 +281,7 @@ export default function LoginScreen() {
           <div className="mt-5 text-center">
             <button
               onClick={switchMode}
-              className="text-[13px] text-[#64748B] hover:text-emerald-500 transition-colors"
+              className="text-[13px] text-app-muted hover:text-emerald-500 transition-colors"
             >
               {mode === "login" ? "Nao tem conta? Cadastre-se" : "Ja tem conta? Entrar"}
             </button>
@@ -296,7 +290,7 @@ export default function LoginScreen() {
       </div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="pb-6 text-center">
-        <p className="text-[10px] text-[#475569]">PontoCerto v1.0</p>
+        <p className="text-[10px] text-app-muted">PontoCerto v1.0</p>
       </motion.div>
     </div>
   );

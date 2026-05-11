@@ -127,13 +127,13 @@ export default function HomeScreen() {
       >
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[22px] font-bold text-[#F1F5F9] leading-tight">
+            <h1 className="text-[22px] font-bold text-app leading-tight">
               Bom dia, {state.profile.name.split(' ')[0]}
             </h1>
-            <p className="text-[13px] text-[#94A3B8] mt-0.5">{currentDateStr}</p>
+            <p className="text-[13px] text-app-secondary mt-0.5">{currentDateStr}</p>
           </div>
           <button className="relative w-10 h-10 flex items-center justify-center">
-            <Bell size={22} className="text-[#94A3B8]" />
+            <Bell size={22} className="text-app-secondary" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
           </button>
         </div>
@@ -171,7 +171,7 @@ export default function HomeScreen() {
               <circle
                 cx="100" cy="100" r="85"
                 fill="none"
-                stroke="#334155"
+                stroke="var(--app-border)"
                 strokeWidth="4"
               />
               {status === 'working' && (
@@ -195,7 +195,7 @@ export default function HomeScreen() {
               disabled={!nextType}
               className={`absolute top-[20px] left-[20px] w-[180px] h-[180px] rounded-full flex flex-col items-center justify-center transition-all duration-300 ${
                 !nextType
-                  ? 'bg-[#334155] cursor-not-allowed'
+                  ? 'bg-app-border cursor-not-allowed'
                   : status === 'off'
                   ? 'bg-gradient-to-br from-emerald-500 to-emerald-400'
                   : status === 'working'
@@ -221,14 +221,14 @@ export default function HomeScreen() {
               )}
               {!nextType && status === 'off' && (
                 <div className="text-center">
-                  <CheckCircle2 size={36} className="text-[#64748B] mx-auto mb-1" />
-                  <span className="text-[13px] font-medium text-[#94A3B8]">Jornada Completa</span>
+                  <CheckCircle2 size={36} className="text-app-muted mx-auto mb-1" />
+                  <span className="text-[13px] font-medium text-app-secondary">Jornada Completa</span>
                 </div>
               )}
             </motion.button>
           </div>
 
-          <p className="text-[15px] font-semibold text-[#F1F5F9] mt-4">
+          <p className="text-[15px] font-semibold text-app mt-4">
             {!nextType
               ? 'Jornada Completa'
               : status === 'off'
@@ -244,11 +244,11 @@ export default function HomeScreen() {
           initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-[#1E293B] rounded-2xl p-4 mb-5"
+          className="bg-app-card rounded-2xl p-4 mb-5"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-[#F1F5F9]">Hoje</h2>
-            <span className="text-[11px] text-[#64748B]">{formatShortDatePT(today)}</span>
+            <h2 className="text-lg font-semibold text-app">Hoje</h2>
+            <span className="text-[11px] text-app-muted">{formatShortDatePT(today)}</span>
           </div>
 
           <div className="space-y-0">
@@ -264,7 +264,7 @@ export default function HomeScreen() {
                   className="flex items-center"
                 >
                   <span className={`w-[52px] text-[15px] font-semibold ${
-                    entry ? 'text-[#F1F5F9]' : 'text-[#64748B]'
+                    entry ? 'text-app' : 'text-app-muted'
                   }`}>
                     {entry ? formatTime(entry.timestamp) : '--:--'}
                   </span>
@@ -275,17 +275,17 @@ export default function HomeScreen() {
                         ? type === 'lunch-out'
                           ? 'bg-amber-500'
                           : type === 'out'
-                          ? 'bg-[#64748B]'
+                          ? 'bg-app-muted'
                           : 'bg-emerald-500'
-                        : 'border border-[#334155] bg-transparent'
+                        : 'border border-app bg-transparent'
                     }`} />
-                    {!isLast && <div className="w-px h-6 bg-[#334155]" />}
+                    {!isLast && <div className="w-px h-6 bg-app-border" />}
                   </div>
 
                   <div className="flex items-center justify-between flex-1">
                     <div className="flex items-center gap-2">
                       <span className={`text-[13px] ${
-                        entry ? 'text-[#F1F5F9]' : 'text-[#64748B]'
+                        entry ? 'text-app' : 'text-app-muted'
                       }`}>
                         {ENTRY_LABELS[type]}
                       </span>
@@ -308,8 +308,8 @@ export default function HomeScreen() {
           </div>
 
           {/* Total */}
-          <div className="border-t border-[#334155] mt-3 pt-3 flex items-center justify-between">
-            <span className="text-[11px] text-[#94A3B8] tracking-wide">Total trabalhado</span>
+          <div className="border-t border-app mt-3 pt-3 flex items-center justify-between">
+            <span className="text-[11px] text-app-secondary tracking-wide">Total trabalhado</span>
             <span className="text-xl font-semibold text-emerald-500">
               {formatDuration(totalWorked)}
             </span>
@@ -324,7 +324,7 @@ export default function HomeScreen() {
           className="flex gap-3 mb-5 overflow-x-auto scrollbar-hide"
         >
           {[
-            { icon: Timer, label: 'Hoje', value: formatDuration(totalWorked), color: 'text-[#F1F5F9]' },
+            { icon: Timer, label: 'Hoje', value: formatDuration(totalWorked), color: 'text-app' },
             { icon: TrendingUp, label: 'Extras (mês)', value: formatDuration(monthlyOvertime), color: 'text-emerald-500' },
             { icon: TrendingDown, label: 'Restantes (mês)', value: formatDuration(remainingHours), color: 'text-amber-500' },
           ].map((stat, idx) => (
@@ -333,12 +333,12 @@ export default function HomeScreen() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 + idx * 0.1 }}
-              className="bg-[#1E293B] rounded-xl px-4 py-3 flex items-center gap-2.5 shrink-0"
+              className="bg-app-card rounded-xl px-4 py-3 flex items-center gap-2.5 shrink-0"
             >
               <stat.icon size={16} className={stat.color} />
               <div>
                 <span className={`text-[13px] font-semibold ${stat.color}`}>{stat.value}</span>
-                <p className="text-[11px] text-[#64748B]">{stat.label}</p>
+                <p className="text-[11px] text-app-muted">{stat.label}</p>
               </div>
             </motion.div>
           ))}
@@ -349,9 +349,9 @@ export default function HomeScreen() {
           initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.8 }}
-          className="bg-[#1E293B] rounded-2xl p-4"
+          className="bg-app-card rounded-2xl p-4"
         >
-          <h2 className="text-lg font-semibold text-[#F1F5F9] mb-4">Esta Semana</h2>
+          <h2 className="text-lg font-semibold text-app mb-4">Esta Semana</h2>
           <div className="flex justify-between">
             {weekDays.map((wd) => {
               const dayTotal = calculateDayTotal(state.entries, wd.date);
@@ -359,10 +359,10 @@ export default function HomeScreen() {
               const progress = Math.min(dayTotal / (state.profile.dailyTarget * 60), 1);
               return (
                 <div key={wd.date} className="flex flex-col items-center gap-2 flex-1">
-                  <span className={`text-[11px] ${isToday ? 'text-emerald-500 font-semibold' : 'text-[#64748B]'}`}>
+                  <span className={`text-[11px] ${isToday ? 'text-emerald-500 font-semibold' : 'text-app-muted'}`}>
                     {wd.label}
                   </span>
-                  <div className="w-10 h-1 bg-[#334155] rounded-full overflow-hidden">
+                  <div className="w-10 h-1 bg-app-border rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${progress * 100}%` }}
@@ -370,7 +370,7 @@ export default function HomeScreen() {
                       className="h-full bg-emerald-500 rounded-full"
                     />
                   </div>
-                  <span className="text-[10px] text-[#64748B]">
+                  <span className="text-[10px] text-app-muted">
                     {dayTotal > 0 ? `${Math.floor(dayTotal / 60)}h` : '-'}
                   </span>
                 </div>

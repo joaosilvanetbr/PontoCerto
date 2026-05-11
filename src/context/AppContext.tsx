@@ -65,6 +65,7 @@ const AppContext = createContext<AppContextValue | null>(null);
 const initialState: AppState = {
   entries: [],
   profile: {
+    id: 0,
     name: "",
     company: "",
     role: "",
@@ -199,6 +200,14 @@ export function useAuthMutations() {
     },
   });
   return { login, register, changePassword };
+}
+
+export function useUserMutations() {
+  const utils = trpc.useUtils();
+  const updateUser = trpc.user.update.useMutation({
+    onSuccess: () => utils.auth.me.invalidate(),
+  });
+  return { updateUser };
 }
 
 export function useToast() {

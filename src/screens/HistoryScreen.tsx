@@ -58,14 +58,14 @@ export default function HistoryScreen() {
         animate={{ opacity: 1 }}
         className="px-5 pt-5 pb-4"
       >
-        <h1 className="text-[28px] font-bold text-[#F1F5F9] mb-2">Histórico</h1>
+        <h1 className="text-[28px] font-bold text-app mb-2">Histórico</h1>
         <div className="flex items-center justify-between">
-          <button onClick={prevMonth} className="w-10 h-10 flex items-center justify-center rounded-xl active:bg-[#334155]">
-            <ChevronLeft size={22} className="text-[#94A3B8]" />
+          <button onClick={prevMonth} className="w-10 h-10 flex items-center justify-center rounded-xl active:bg-app-border/50">
+            <ChevronLeft size={22} className="text-app-secondary" />
           </button>
-          <span className="text-lg font-semibold text-[#F1F5F9]">{getMonthName(month, year)}</span>
-          <button onClick={nextMonth} className="w-10 h-10 flex items-center justify-center rounded-xl active:bg-[#334155]">
-            <ChevronRight size={22} className="text-[#94A3B8]" />
+          <span className="text-lg font-semibold text-app">{getMonthName(month, year)}</span>
+          <button onClick={nextMonth} className="w-10 h-10 flex items-center justify-center rounded-xl active:bg-app-border/50">
+            <ChevronRight size={22} className="text-app-secondary" />
           </button>
         </div>
       </motion.div>
@@ -75,7 +75,7 @@ export default function HistoryScreen() {
         {/* Weekday headers */}
         <div className="grid grid-cols-7 mb-2">
           {WEEK_DAYS.map(d => (
-            <div key={d} className="text-center text-[11px] font-medium text-[#64748B] py-2">
+            <div key={d} className="text-center text-[11px] font-medium text-app-muted py-2">
               {d}
             </div>
           ))}
@@ -104,12 +104,12 @@ export default function HistoryScreen() {
                   isSelected
                     ? 'bg-emerald-500/15'
                     : status !== 'empty'
-                    ? 'bg-[#252F42]'
+                    ? 'bg-app-highlight'
                     : 'bg-transparent'
                 } ${isToday ? 'ring-1 ring-emerald-500' : ''}`}
               >
                 <span className={`text-[13px] font-medium ${
-                  isToday ? 'text-emerald-500' : isSelected ? 'text-emerald-500' : 'text-[#F1F5F9]'
+                  isToday ? 'text-emerald-500' : isSelected ? 'text-emerald-500' : 'text-app'
                 }`}>
                   {day}
                 </span>
@@ -119,7 +119,7 @@ export default function HistoryScreen() {
                   }`} />
                 )}
                 {status === 'empty' && (
-                  <div className="w-1.5 h-1.5 rounded-full border border-[#334155] mt-1" />
+                  <div className="w-1.5 h-1.5 rounded-full border border-app mt-1" />
                 )}
               </motion.button>
             );
@@ -142,20 +142,20 @@ export default function HistoryScreen() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="relative bg-[#1E293B] rounded-t-[20px] w-full max-h-[70vh] z-10"
+              className="relative bg-app-card rounded-t-[20px] w-full max-h-[70vh] z-10"
             >
               {/* Handle */}
               <div className="flex justify-center pt-3 pb-2">
-                <div className="w-10 h-1 bg-[#334155] rounded-full" />
+                <div className="w-10 h-1 bg-app-border rounded-full" />
               </div>
 
               <div className="px-5 pb-8">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-[#F1F5F9]">
+                    <h3 className="text-lg font-semibold text-app">
                       {selectedDay} de {getMonthName(month, year).split(' ')[0]}
                     </h3>
-                    <p className="text-[11px] text-[#64748B]">
+                    <p className="text-[11px] text-app-muted">
                       {selectedEntries.length === 0
                         ? 'Sem registros'
                         : selectedEntries.length === 4
@@ -165,9 +165,9 @@ export default function HistoryScreen() {
                   </div>
                   <button
                     onClick={() => setSelectedDay(null)}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-[#334155]"
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-app-border"
                   >
-                    <X size={16} className="text-[#94A3B8]" />
+                    <X size={16} className="text-app-secondary" />
                   </button>
                 </div>
 
@@ -178,21 +178,21 @@ export default function HistoryScreen() {
                       alt="Sem registros"
                       className="w-24 h-24 rounded-xl object-cover mb-3 opacity-60"
                     />
-                    <p className="text-[13px] text-[#64748B]">Sem registros neste dia</p>
+                    <p className="text-[13px] text-app-muted">Sem registros neste dia</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {selectedEntries.map(entry => (
-                      <div key={entry.id} className="flex items-center gap-3 bg-[#0F172A] rounded-xl p-3">
+                      <div key={entry.id} className="flex items-center gap-3 bg-app rounded-xl p-3">
                         <div className={`w-2 h-2 rounded-full ${
                           entry.type === 'lunch-out' ? 'bg-amber-500' : 'bg-emerald-500'
                         }`} />
                         <div className="flex-1">
-                          <span className="text-[13px] text-[#F1F5F9] font-medium">
+                          <span className="text-[13px] text-app font-medium">
                             {entryLabels[entry.type]}
                           </span>
                         </div>
-                        <span className="text-[15px] font-semibold text-[#F1F5F9] mr-1">
+                        <span className="text-[15px] font-semibold text-app mr-1">
                           {formatTime(entry.timestamp)}
                         </span>
                         <EntryEditor
@@ -206,8 +206,8 @@ export default function HistoryScreen() {
                     ))}
 
                     {selectedTotal > 0 && (
-                      <div className="border-t border-[#334155] pt-3 flex items-center justify-between">
-                        <span className="text-[11px] text-[#94A3B8]">Total trabalhado</span>
+                      <div className="border-t border-app pt-3 flex items-center justify-between">
+                        <span className="text-[11px] text-app-secondary">Total trabalhado</span>
                         <span className="text-lg font-semibold text-emerald-500">
                           {formatDuration(selectedTotal)}
                         </span>

@@ -60,7 +60,7 @@ function App() {
   return (
     <AppProvider>
       <div className="min-h-screen bg-black flex justify-center items-start">
-        <div className="w-full max-w-[430px] h-[100dvh] bg-[#0F172A] relative overflow-hidden shadow-2xl">
+        <div className="w-full max-w-[430px] h-[100dvh] bg-app relative overflow-hidden shadow-2xl">
           <AppContent />
           <Toast />
         </div>

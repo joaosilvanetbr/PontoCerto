@@ -19,12 +19,26 @@ export async function createContext(
 ): Promise<TrpcContext> {
   const safeEnv = env ?? { DB: undefined as unknown as D1Database };
 
-  // Try to extract and verify JWT from Authorization header
-  const authHeader = opts.req.headers.get("authorization");
   let user = undefined;
 
-  if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.slice(7);
+  // Try cookie first (httpOnly cookie set by login endpoint)
+  const cookieHeader = opts.req.headers.get("cookie") || "";
+  let token: string | null = null;
+
+  if (cookieHeader) {
+    const match = cookieHeader.match(/(?:^|;\s*)pontocerto_token=([^;]*)/);
+    if (match) token = match[1];
+  }
+
+  // Fallback: Authorization header (for backwards compatibility during migration)
+  if (!token) {
+    const auth = opts.req.headers.get("authorization");
+    if (auth?.startsWith("Bearer ")) {
+      token = auth.slice(7);
+    }
+  }
+
+  if (token) {
     const payload = await verifyToken(token, safeEnv);
     if (payload) {
       user = payload;
