@@ -1,73 +1,93 @@
-# React + TypeScript + Vite
+# PontoCerto
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+App de controle de ponto pessoal. Registre suas batidas, acompanhe horas trabalhadas, visualize histórico e exporte relatórios.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Frontend:** React 19 + TypeScript + Tailwind CSS + shadcn/ui + Framer Motion
+- **Backend:** tRPC + Drizzle ORM + Hono
+- **Database:** Cloudflare D1 (SQLite serverless)
+- **Deploy:** Cloudflare Pages
 
-## React Compiler
+## Estrutura do Projeto
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+├── src/                    # Frontend
+│   ├── screens/            # Telas (Login, Home, History, Reports, Profile)
+│   ├── components/         # Componentes reutilizáveis
+│   ├── context/            # AppContext + tRPC hooks
+│   ├── providers/          # TRPCProvider
+│   └── types/              # Tipos TypeScript
+├── api/                    # Backend tRPC
+│   ├── router.ts           # Rotas da API
+│   ├── context.ts          # Contexto do tRPC
+│   ├── middleware.ts       # Middleware
+│   └── queries/            # Queries
+├── db/                     # Database
+│   ├── schema.ts           # Drizzle schema
+│   ├── schema.sql          # SQL schema para D1
+│   └── seed.sql            # Dados iniciais
+├── functions/api/          # Cloudflare Pages Functions
+├── contracts/              # Tipos compartilhados
+└── public/assets/          # Imagens
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Deploy no Cloudflare
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 1. Instalar dependências
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+### 2. Configurar Cloudflare
+
+```bash
+npx wrangler login
+```
+
+### 3. Criar banco D1
+
+```bash
+npx wrangler d1 create pontocerto-db
+```
+
+Copie o `database_id` para o `wrangler.toml`.
+
+### 4. Aplicar schema e seed
+
+```bash
+npx wrangler d1 execute pontocerto-db --file=./db/schema.sql
+npx wrangler d1 execute pontocerto-db --file=./db/seed.sql
+```
+
+### 5. Build e deploy
+
+```bash
+npm run build
+npx wrangler pages deploy dist/public
+```
+
+## Desenvolvimento local
+
+```bash
+npm run dev      # Servidor de desenvolvimento
+npm run check    # Type check
+npm run build    # Build de produção
+```
+
+## PIN padrão
+
+O PIN padrão para login é **1234**.
+
+## API Endpoints (tRPC)
+
+- `user.get` - Buscar perfil
+- `user.create` - Criar usuário
+- `user.update` - Atualizar perfil
+- `entry.list` - Listar pontos
+- `entry.getByDate` - Pontos por data
+- `entry.create` - Registrar ponto
+- `entry.update` - Editar ponto
+- `entry.delete` - Remover ponto
+- `entry.listByMonth` - Pontos do mês
