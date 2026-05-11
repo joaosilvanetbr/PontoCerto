@@ -4,7 +4,7 @@ import {
   Play, Coffee, Bell, CheckCircle2,
   Timer, TrendingUp, TrendingDown
 } from 'lucide-react';
-import { useAppState, useToast } from '@/context/AppContext';
+import { useAppState, useToast, useEntryMutations } from '@/context/AppContext';
 import { useInterval } from '@/hooks/useInterval';
 import EntryEditor from '@/components/EntryEditor';
 import {
@@ -23,8 +23,9 @@ const ENTRY_LABELS: Record<TimeEntry['type'], string> = {
 };
 
 export default function HomeScreen() {
-  const { state, dispatch } = useAppState();
+  const { state } = useAppState();
   const { showToast } = useToast();
+  const { createEntry } = useEntryMutations();
   const today = getTodayString();
   const [tick, setTick] = useState(0);
 
@@ -44,21 +45,19 @@ export default function HomeScreen() {
     }
   }, 1000);
 
-  const handleClockAction = useCallback(() => {
+  const handleClockAction = useCallback(async () => {
     if (!nextType) {
       showToast('Jornada completa para hoje!', 'warning');
       return;
     }
 
     const now = Date.now();
-    const newEntry: TimeEntry = {
-      id: Math.random().toString(36).substring(2, 9) + Date.now().toString(36),
+    await createEntry.mutateAsync({
+      userId: 1,
       type: nextType,
       timestamp: now,
       date: today,
-    };
-
-    dispatch({ type: 'ADD_ENTRY', payload: newEntry });
+    });
 
     const labels: Record<TimeEntry['type'], string> = {
       'in': 'Entrada registrada',
@@ -67,7 +66,7 @@ export default function HomeScreen() {
       'out': 'Saída registrada',
     };
     showToast(`${labels[nextType]} às ${formatTime(now)}`, 'success');
-  }, [nextType, today, dispatch, showToast]);
+  }, [nextType, today, createEntry, showToast]);
 
   // Live timer display
   const liveTimer = useMemo(() => {

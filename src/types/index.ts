@@ -2,16 +2,10 @@ export type TimeEntryType = 'in' | 'lunch-out' | 'lunch-in' | 'out';
 export type ClockStatus = 'off' | 'working' | 'break';
 
 export interface TimeEntry {
-  id: string;
+  id: string | number;
   type: TimeEntryType;
   timestamp: number;
   date: string;
-}
-
-export interface DayRecord {
-  date: string;
-  entries: TimeEntry[];
-  totalWorked: number;
 }
 
 export interface UserProfile {
@@ -50,9 +44,10 @@ export interface AppState {
 }
 
 export type AppAction =
+  | { type: 'SET_ENTRIES'; payload: TimeEntry[] }
   | { type: 'ADD_ENTRY'; payload: TimeEntry }
   | { type: 'DELETE_ENTRY'; payload: string }
-  | { type: 'UPDATE_ENTRY'; payload: { id: string; timestamp: number; date: string } }
+  | { type: 'UPDATE_ENTRY'; payload: { id: string | number; timestamp: number; date: string } }
   | { type: 'UPDATE_PROFILE'; payload: Partial<UserProfile> }
   | { type: 'SET_AUTH'; payload: boolean }
   | { type: 'UPDATE_LAST_ACTIVE' }

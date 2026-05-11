@@ -1,64 +1,57 @@
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
-import type { AppState, AppAction } from '@/types';
-import { loadState, saveState, clearAllData, createMockState } from '@/lib/data';
+import { trpc } from '@/providers/trpc';
+import type { AppState, AppAction, TimeEntry } from '@/types';
 
 function appReducer(state: AppState, action: AppAction): AppState {
-  let newState: AppState;
-
   switch (action.type) {
+    case 'SET_ENTRIES':
+      return { ...state, entries: action.payload };
     case 'ADD_ENTRY':
-      newState = { ...state, entries: [...state.entries, action.payload] };
-      break;
+      return { ...state, entries: [...state.entries, action.payload] };
     case 'DELETE_ENTRY':
-      newState = { ...state, entries: state.entries.filter(e => e.id !== action.payload) };
-      break;
+      return { ...state, entries: state.entries.filter(e => String(e.id) !== action.payload) };
     case 'UPDATE_ENTRY':
-      newState = {
+      return {
         ...state,
         entries: state.entries.map(e =>
-          e.id === action.payload.id
+          String(e.id) === String(action.payload.id)
             ? { ...e, timestamp: action.payload.timestamp, date: action.payload.date }
             : e
         ),
       };
-      break;
     case 'UPDATE_PROFILE':
-      newState = { ...state, profile: { ...state.profile, ...action.payload } };
-      break;
+      return { ...state, profile: { ...state.profile, ...action.payload } };
     case 'SET_AUTH':
-      newState = { ...state, session: { ...state.session, isAuthenticated: action.payload, lastActive: Date.now() } };
-      break;
+      return { ...state, session: { ...state.session, isAuthenticated: action.payload, lastActive: Date.now() } };
     case 'UPDATE_LAST_ACTIVE':
-      newState = { ...state, session: { ...state.session, lastActive: Date.now() } };
-      break;
+      return { ...state, session: { ...state.session, lastActive: Date.now() } };
     case 'SHOW_TOAST':
-      newState = { ...state, ui: { ...state.ui, toast: { ...action.payload, visible: true } } };
-      break;
+      return { ...state, ui: { ...state.ui, toast: { ...action.payload, visible: true } } };
     case 'HIDE_TOAST':
-      newState = { ...state, ui: { ...state.ui, toast: null } };
-      break;
+      return { ...state, ui: { ...state.ui, toast: null } };
     case 'SET_ACTIVE_MODAL':
-      newState = { ...state, ui: { ...state.ui, activeModal: action.payload } };
-      break;
-    case 'CLEAR_ALL_DATA': {
-      clearAllData();
-      const mock = createMockState();
-      newState = { ...mock, ui: state.ui };
-      break;
-    }
+      return { ...state, ui: { ...state.ui, activeModal: action.payload } };
+    case 'CLEAR_ALL_DATA':
+      return {
+        ...state,
+        entries: [],
+        profile: {
+          name: '',
+          company: '',
+          role: '',
+          avatar: '',
+          pin: '1234',
+          workStartTime: '08:00',
+          workEndTime: '17:00',
+          lunchDuration: 60,
+          dailyTarget: 8.8,
+        },
+      };
     case 'LOAD_STATE':
-      newState = action.payload;
-      break;
+      return action.payload;
     default:
       return state;
   }
-
-  // Persist to localStorage (skip UI state)
-  if (action.type !== 'SHOW_TOAST' && action.type !== 'HIDE_TOAST' && action.type !== 'SET_ACTIVE_MODAL') {
-    saveState(newState);
-  }
-
-  return newState;
 }
 
 interface AppContextValue {
@@ -68,15 +61,43 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(appReducer, loadState());
+const initialState: AppState = {
+  entries: [],
+  profile: {
+    name: 'Carlos Eduardo',
+    company: 'Tech Solutions Brasil',
+    role: 'Desenvolvedor Full Stack',
+    avatar: '/assets/avatar-user.jpg',
+    pin: '1234',
+    workStartTime: '08:00',
+    workEndTime: '17:00',
+    lunchDuration: 60,
+    dailyTarget: 8.8,
+  },
+  session: {
+    isAuthenticated: true,
+    lastActive: Date.now(),
+  },
+  ui: {
+    toast: null,
+    activeModal: null,
+  },
+};
 
-  // Update last active on user interaction
+export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [state, dispatch] = useReducer(appReducer, initialState);
+
+  // Sync entries from backend
+  const { data: entriesData } = trpc.entry.list.useQuery({ userId: 1 });
   useEffect(() => {
-    const handler = () => dispatch({ type: 'UPDATE_LAST_ACTIVE' });
-    window.addEventListener('click', handler);
-    return () => window.removeEventListener('click', handler);
-  }, []);
+    if (entriesData) {
+      const mapped: TimeEntry[] = entriesData.map((e: { id: number | string; type: TimeEntry['type']; timestamp: number; date: string }) => ({
+        ...e,
+        id: String(e.id),
+      }));
+      dispatch({ type: 'SET_ENTRIES', payload: mapped });
+    }
+  }, [entriesData]);
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>
@@ -91,7 +112,20 @@ export function useAppState() {
   return ctx;
 }
 
-// Toast helper
+export function useEntryMutations() {
+  const utils = trpc.useUtils();
+  const createEntry = trpc.entry.create.useMutation({
+    onSuccess: () => utils.entry.list.invalidate(),
+  });
+  const updateEntry = trpc.entry.update.useMutation({
+    onSuccess: () => utils.entry.list.invalidate(),
+  });
+  const deleteEntry = trpc.entry.delete.useMutation({
+    onSuccess: () => utils.entry.list.invalidate(),
+  });
+  return { createEntry, updateEntry, deleteEntry };
+}
+
 export function useToast() {
   const { dispatch } = useAppState();
 

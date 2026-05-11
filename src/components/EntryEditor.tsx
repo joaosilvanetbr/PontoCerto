@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Pencil, Trash2, Check, X } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAppState, useToast } from '@/context/AppContext';
+import { useEntryMutations, useToast } from '@/context/AppContext';
 import { formatTime } from '@/lib/data';
-import Modal from './Modal';
 
 interface EntryEditorProps {
-  entryId: string;
+  entryId: string | number;
   entryType: string;
   timestamp: number;
   date: string;
@@ -14,166 +13,189 @@ interface EntryEditorProps {
 }
 
 export default function EntryEditor({ entryId, entryType, timestamp, date, compact }: EntryEditorProps) {
-  const { dispatch } = useAppState();
+  const { updateEntry, deleteEntry } = useEntryMutations();
   const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editTime, setEditTime] = useState(formatTime(timestamp));
-  const [, setShowDelete] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const [hours, minutes] = editTime.split(':').map(Number);
     const [year, month, dayNum] = date.split('-').map(Number);
     const newTimestamp = new Date(year, month - 1, dayNum, hours, minutes).getTime();
 
-    dispatch({
-      type: 'UPDATE_ENTRY',
-      payload: { id: entryId, timestamp: newTimestamp, date },
+    await updateEntry.mutateAsync({
+      id: Number(entryId),
+      timestamp: newTimestamp,
+      date,
     });
     setIsEditing(false);
     showToast('Registro atualizado', 'success');
   };
 
-  const handleDelete = () => {
-    dispatch({ type: 'DELETE_ENTRY', payload: entryId });
-    setShowDelete(false);
+  const handleDelete = async () => {
+    await deleteEntry.mutateAsync({ id: Number(entryId) });
+    setShowConfirm(false);
     showToast('Registro removido', 'warning');
   };
 
+  const buttons = (
+    <div className="flex items-center gap-0.5">
+      <button
+        onClick={() => setIsEditing(true)}
+        className="w-7 h-7 flex items-center justify-center rounded-lg active:bg-[#334155]"
+      >
+        <Pencil size={13} className="text-[#64748B]" />
+      </button>
+      <button
+        onClick={() => setShowConfirm(true)}
+        className="w-7 h-7 flex items-center justify-center rounded-lg active:bg-red-500/10"
+      >
+        <Trash2 size={13} className="text-[#64748B]" />
+      </button>
+    </div>
+  );
+
   if (compact) {
     return (
-      <div className="flex items-center gap-1">
-        <button
-          onClick={() => setIsEditing(true)}
-          className="w-7 h-7 flex items-center justify-center rounded-lg active:bg-[#334155]"
-        >
-          <Pencil size={13} className="text-[#64748B]" />
-        </button>
-        <button
-          onClick={() => setShowDelete(true)}
-          className="w-7 h-7 flex items-center justify-center rounded-lg active:bg-red-500/10"
-        >
-          <Trash2 size={13} className="text-[#64748B]" />
-        </button>
+      <>
+        {buttons}
 
-        <Modal id={`edit-${entryId}`} title={`Editar ${entryType}`} onClose={() => setIsEditing(false)}>
-          <input
-            type="time"
-            value={editTime}
-            onChange={(e) => setEditTime(e.target.value)}
-            className="w-full h-12 bg-[#0F172A] border border-[#334155] rounded-xl px-4 text-[#F1F5F9] text-lg text-center focus:outline-none focus:border-emerald-500 mb-4"
-            autoFocus
-          />
-          <div className="flex gap-3">
-            <button
+        {/* Edit inline */}
+        <AnimatePresence>
+          {isEditing && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70"
               onClick={() => setIsEditing(false)}
-              className="flex-1 h-11 bg-[#334155] rounded-xl text-[#F1F5F9] font-medium text-sm"
             >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSave}
-              className="flex-1 h-11 bg-emerald-500 rounded-xl text-white font-medium text-sm"
-            >
-              Salvar
-            </button>
-          </div>
-        </Modal>
+              <div className="bg-[#1E293B] rounded-2xl p-6 w-[85%] max-w-[300px]" onClick={e => e.stopPropagation()}>
+                <h3 className="text-lg font-semibold text-[#F1F5F9] mb-4">Editar {entryType}</h3>
+                <input
+                  type="time"
+                  value={editTime}
+                  onChange={(e) => setEditTime(e.target.value)}
+                  className="w-full h-12 bg-[#0F172A] border border-[#334155] rounded-xl px-4 text-[#F1F5F9] text-lg text-center focus:outline-none focus:border-emerald-500 mb-4"
+                  autoFocus
+                />
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    className="flex-1 h-11 bg-[#334155] rounded-xl text-[#F1F5F9] font-medium text-sm"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className="flex-1 h-11 bg-emerald-500 rounded-xl text-white font-medium text-sm"
+                  >
+                    Salvar
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <Modal id={`delete-${entryId}`} title="Confirmar exclusão" onClose={() => setShowDelete(false)}>
-          <p className="text-[13px] text-[#94A3B8] mb-5">
-            Deseja remover o registro de {entryType} às {formatTime(timestamp)}?
-          </p>
-          <div className="flex gap-3">
-            <button
-              onClick={() => setShowDelete(false)}
-              className="flex-1 h-11 bg-[#334155] rounded-xl text-[#F1F5F9] font-medium text-sm"
+        {/* Delete confirm */}
+        <AnimatePresence>
+          {showConfirm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70"
+              onClick={() => setShowConfirm(false)}
             >
-              Cancelar
-            </button>
-            <button
-              onClick={handleDelete}
-              className="flex-1 h-11 bg-red-500 rounded-xl text-white font-medium text-sm"
-            >
-              Remover
-            </button>
-          </div>
-        </Modal>
-      </div>
+              <div className="bg-[#1E293B] rounded-2xl p-6 w-[85%] max-w-[300px]" onClick={e => e.stopPropagation()}>
+                <h3 className="text-lg font-semibold text-[#F1F5F9] mb-3">Confirmar exclusão</h3>
+                <p className="text-[13px] text-[#94A3B8] mb-5">
+                  Remover registro de {entryType} às {formatTime(timestamp)}?
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowConfirm(false)}
+                    className="flex-1 h-11 bg-[#334155] rounded-xl text-[#F1F5F9] font-medium text-sm"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="flex-1 h-11 bg-red-500 rounded-xl text-white font-medium text-sm"
+                  >
+                    Remover
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </>
     );
   }
 
   return (
     <>
+      {isEditing ? (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="flex items-center gap-2 mt-2"
+        >
+          <input
+            type="time"
+            value={editTime}
+            onChange={(e) => setEditTime(e.target.value)}
+            className="h-9 bg-[#0F172A] border border-[#334155] rounded-lg px-2 text-[#F1F5F9] text-sm focus:outline-none focus:border-emerald-500"
+            autoFocus
+          />
+          <button onClick={handleSave} className="h-9 px-3 rounded-lg bg-emerald-500/20 text-emerald-500 text-sm font-medium active:bg-emerald-500/30">
+            Salvar
+          </button>
+          <button onClick={() => { setEditTime(formatTime(timestamp)); setIsEditing(false); }} className="h-9 px-3 rounded-lg bg-[#334155] text-[#94A3B8] text-sm active:bg-[#475569]">
+            Cancelar
+          </button>
+        </motion.div>
+      ) : (
+        buttons
+      )}
+
+      {/* Delete confirm */}
       <AnimatePresence>
-        {isEditing && (
+        {showConfirm && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="flex items-center gap-2 mt-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70"
+            onClick={() => setShowConfirm(false)}
           >
-            <input
-              type="time"
-              value={editTime}
-              onChange={(e) => setEditTime(e.target.value)}
-              className="h-9 bg-[#0F172A] border border-[#334155] rounded-lg px-2 text-[#F1F5F9] text-sm focus:outline-none focus:border-emerald-500"
-              autoFocus
-            />
-            <button
-              onClick={handleSave}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-500/20 active:bg-emerald-500/30"
-            >
-              <Check size={16} className="text-emerald-500" />
-            </button>
-            <button
-              onClick={() => {
-                setEditTime(formatTime(timestamp));
-                setIsEditing(false);
-              }}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#334155] active:bg-[#475569]"
-            >
-              <X size={16} className="text-[#94A3B8]" />
-            </button>
+            <div className="bg-[#1E293B] rounded-2xl p-6 w-[85%] max-w-[300px]" onClick={e => e.stopPropagation()}>
+              <h3 className="text-lg font-semibold text-[#F1F5F9] mb-3">Confirmar exclusão</h3>
+              <p className="text-[13px] text-[#94A3B8] mb-5">
+                Remover registro de {entryType} às {formatTime(timestamp)}?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  className="flex-1 h-11 bg-[#334155] rounded-xl text-[#F1F5F9] font-medium text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="flex-1 h-11 bg-red-500 rounded-xl text-white font-medium text-sm"
+                >
+                  Remover
+                </button>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {!isEditing && (
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setIsEditing(true)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg active:bg-[#334155]"
-          >
-            <Pencil size={13} className="text-[#64748B]" />
-          </button>
-          <button
-            onClick={() => setShowDelete(true)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg active:bg-red-500/10"
-          >
-            <Trash2 size={13} className="text-[#64748B]" />
-          </button>
-        </div>
-      )}
-
-      <Modal id={`delete-${entryId}`} title="Confirmar exclusão" onClose={() => setShowDelete(false)}>
-        <p className="text-[13px] text-[#94A3B8] mb-5">
-          Deseja remover o registro de {entryType} às {formatTime(timestamp)}?
-        </p>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setShowDelete(false)}
-            className="flex-1 h-11 bg-[#334155] rounded-xl text-[#F1F5F9] font-medium text-sm"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleDelete}
-            className="flex-1 h-11 bg-red-500 rounded-xl text-white font-medium text-sm"
-          >
-            Remover
-          </button>
-        </div>
-      </Modal>
     </>
   );
 }

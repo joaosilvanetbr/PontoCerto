@@ -1,16 +1,13 @@
-import "dotenv/config";
 import { defineConfig } from "drizzle-kit";
-
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error("DATABASE_URL is required to run drizzle commands");
-}
 
 export default defineConfig({
   schema: "./db/schema.ts",
   out: "./db/migrations",
-  dialect: "mysql",
+  dialect: "sqlite",
+  driver: "d1-http",
   dbCredentials: {
-    url: connectionString,
+    accountId: process.env.CLOUDFLARE_ACCOUNT_ID || "",
+    databaseId: process.env.CLOUDFLARE_DATABASE_ID || "",
+    token: process.env.CLOUDFLARE_API_TOKEN || "",
   },
 });
