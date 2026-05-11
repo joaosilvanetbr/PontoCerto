@@ -66,8 +66,12 @@ export default function ProfileScreen() {
             </div>
           </div>
           <h2 className="text-lg font-bold text-[#F1F5F9]">{state.profile.name}</h2>
-          <p className="text-[14px] text-[#94A3B8] mt-0.5">{state.profile.company}</p>
-          <p className="text-[12px] text-[#64748B] mt-0.5">{state.profile.role}</p>
+          {state.profile.company && (
+            <p className="text-[14px] text-[#94A3B8] mt-0.5">{state.profile.company}</p>
+          )}
+          {state.profile.role && (
+            <p className="text-[12px] text-[#64748B] mt-0.5">{state.profile.role}</p>
+          )}
           <p className="text-[11px] text-[#475569] mt-1">@{state.profile.username}</p>
         </motion.div>
 
