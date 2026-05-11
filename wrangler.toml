@@ -7,7 +7,3 @@ compatibility_flags = ["nodejs_compat"]
 binding = "DB"
 database_name = "pontocerto"
 database_id = "e1eec67e-5c8a-4d6a-ac3a-af6daefddd1d"
-
-# Pages site configuration (for wrangler pages deploy)
-[site]
-bucket = "./dist/public"
