@@ -5,8 +5,8 @@ compatibility_flags = ["nodejs_compat"]
 # D1 Database binding
 [[d1_databases]]
 binding = "DB"
-database_name = "pontocerto-db"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_name = "pontocerto"
+database_id = "e1eec67e-5c8a-4d6a-ac3a-af6daefddd1d"
 
 # Pages site configuration (for wrangler pages deploy)
 [site]

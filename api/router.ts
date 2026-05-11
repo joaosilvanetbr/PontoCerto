@@ -1,12 +1,40 @@
 import { z } from "zod";
 import { eq, and, desc } from "drizzle-orm";
-import { createRouter, publicQuery } from "./middleware";
+import { createRouter, publicQuery, authedQuery } from "./middleware";
 import { createDb } from "@db/connection";
 import { users, timeEntries } from "@db/schema";
+import { createToken } from "./lib/jwt";
 
 export const appRouter = createRouter({
   // Health check
   ping: publicQuery.query(() => ({ ok: true, ts: Date.now() })),
+
+  // ===== AUTH =====
+  auth: createRouter({
+    login: publicQuery
+      .input(z.object({
+        pin: z.string().length(4),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = createDb(ctx.env.DB);
+        const user = await db.select().from(users).limit(1);
+        if (!user[0]) {
+          throw new Error("Usuario nao encontrado");
+        }
+        if (user[0].pin !== input.pin) {
+          throw new Error("PIN incorreto");
+        }
+        const token = await createToken({ userId: user[0].id, pin: user[0].pin }, ctx.env);
+        return { token, user: user[0] };
+      }),
+
+    me: authedQuery.query(async ({ ctx }) => {
+      const db = createDb(ctx.env.DB);
+      const user = await db.select().from(users).where(eq(users.id, ctx.user!.userId)).limit(1);
+      if (!user[0]) throw new Error("Usuario nao encontrado");
+      return user[0];
+    }),
+  }),
 
   // ===== USERS =====
   user: createRouter({
@@ -57,52 +85,48 @@ export const appRouter = createRouter({
 
   // ===== TIME ENTRIES =====
   entry: createRouter({
-    list: publicQuery
+    list: authedQuery
       .input(z.object({
-        userId: z.number(),
         date: z.string().optional(),
       }).optional())
       .query(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
-        const userId = input?.userId ?? 1;
-
-        let query = db.select().from(timeEntries).where(eq(timeEntries.userId, userId)).orderBy(desc(timeEntries.timestamp));
-
+        const userId = ctx.user!.userId;
         if (input?.date) {
-          query = db.select().from(timeEntries)
+          return db.select().from(timeEntries)
             .where(and(eq(timeEntries.userId, userId), eq(timeEntries.date, input.date)))
-            .orderBy(timeEntries.timestamp) as typeof query;
+            .orderBy(timeEntries.timestamp);
         }
-
-        return query;
+        return db.select().from(timeEntries)
+          .where(eq(timeEntries.userId, userId))
+          .orderBy(desc(timeEntries.timestamp));
       }),
 
-    getByDate: publicQuery
-      .input(z.object({
-        userId: z.number(),
-        date: z.string(),
-      }))
+    getByDate: authedQuery
+      .input(z.object({ date: z.string() }))
       .query(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
         return db.select().from(timeEntries)
-          .where(and(eq(timeEntries.userId, input.userId), eq(timeEntries.date, input.date)))
+          .where(and(eq(timeEntries.userId, ctx.user!.userId), eq(timeEntries.date, input.date)))
           .orderBy(timeEntries.timestamp);
       }),
 
-    create: publicQuery
+    create: authedQuery
       .input(z.object({
-        userId: z.number(),
         type: z.enum(["in", "lunch-out", "lunch-in", "out"]),
         timestamp: z.number(),
         date: z.string(),
       }))
       .mutation(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
-        const result = await db.insert(timeEntries).values(input).returning();
+        const result = await db.insert(timeEntries).values({
+          userId: ctx.user!.userId,
+          ...input,
+        }).returning();
         return result[0];
       }),
 
-    update: publicQuery
+    update: authedQuery
       .input(z.object({
         id: z.number(),
         timestamp: z.number(),
@@ -115,7 +139,7 @@ export const appRouter = createRouter({
         return result[0];
       }),
 
-    delete: publicQuery
+    delete: authedQuery
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
@@ -123,18 +147,16 @@ export const appRouter = createRouter({
         return { success: true };
       }),
 
-    listByMonth: publicQuery
+    listByMonth: authedQuery
       .input(z.object({
-        userId: z.number(),
         year: z.number(),
         month: z.number(),
       }))
       .query(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
         const prefix = `${input.year}-${String(input.month).padStart(2, "0")}`;
-        // D1 doesn't support LIKE in the same way, so we filter in memory
         const all = await db.select().from(timeEntries)
-          .where(eq(timeEntries.userId, input.userId))
+          .where(eq(timeEntries.userId, ctx.user!.userId))
           .orderBy(desc(timeEntries.timestamp));
         return all.filter(e => e.date.startsWith(prefix));
       }),

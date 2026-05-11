@@ -1,57 +1,60 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Delete, Fingerprint } from 'lucide-react';
-import { useAppState } from '@/context/AppContext';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Delete, Fingerprint } from "lucide-react";
+import { useAppState } from "@/context/AppContext";
+import { trpc } from "@/utils/trpc";
 
 const NUMPAD_KEYS = [
-  ['1', '2', '3'],
-  ['4', '5', '6'],
-  ['7', '8', '9'],
-  ['', '0', 'del'],
+  ["1", "2", "3"],
+  ["4", "5", "6"],
+  ["7", "8", "9"],
+  ["", "0", "del"],
 ];
 
 export default function LoginScreen() {
-  const { state, dispatch } = useAppState();
-  const [pin, setPin] = useState('');
+  const { dispatch } = useAppState();
+  const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
   const [showHint, setShowHint] = useState(false);
 
-  const handlePinSubmit = (enteredPin: string) => {
-    if (enteredPin === state.profile.pin) {
-      dispatch({ type: 'SET_AUTH', payload: true });
-    } else {
+  const loginMutation = trpc.auth.login.useMutation({
+    onSuccess: (data) => {
+      localStorage.setItem("pontocerto_token", data.token);
+      dispatch({ type: "SET_AUTH", payload: true });
+    },
+    onError: () => {
       setError(true);
       setTimeout(() => {
         setError(false);
-        setPin('');
+        setPin("");
       }, 800);
-    }
-  };
+    },
+  });
 
   useEffect(() => {
     if (pin.length === 4) {
-      handlePinSubmit(pin);
+      loginMutation.mutate({ pin });
     }
   }, [pin]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key >= '0' && e.key <= '9') {
-        setPin(prev => (prev.length < 4 ? prev + e.key : prev));
+      if (e.key >= "0" && e.key <= "9") {
+        setPin((prev) => (prev.length < 4 ? prev + e.key : prev));
       }
-      if (e.key === 'Backspace') {
-        setPin(prev => prev.slice(0, -1));
+      if (e.key === "Backspace") {
+        setPin((prev) => prev.slice(0, -1));
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 
   const handleNumpadPress = (key: string) => {
-    if (key === 'del') {
-      setPin(prev => prev.slice(0, -1));
+    if (key === "del") {
+      setPin((prev) => prev.slice(0, -1));
     } else if (key && pin.length < 4) {
-      setPin(prev => prev + key);
+      setPin((prev) => prev + key);
     }
   };
 
@@ -64,7 +67,7 @@ export default function LoginScreen() {
             scale: [1, 1.2, 1],
             opacity: [0.08, 0.12, 0.08],
           }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
           className="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-emerald-500 blur-[100px]"
         />
         <motion.div
@@ -72,7 +75,7 @@ export default function LoginScreen() {
             scale: [1.2, 1, 1.2],
             opacity: [0.06, 0.1, 0.06],
           }}
-          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
           className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-emerald-600 blur-[120px]"
         />
       </div>
@@ -83,13 +86,13 @@ export default function LoginScreen() {
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+          transition={{ type: "spring", stiffness: 200, damping: 15 }}
           className="flex flex-col items-center mb-12"
         >
           {/* Logo */}
           <motion.div
             animate={{ y: [0, -4, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             className="mb-6"
           >
             <div className="w-24 h-24 rounded-3xl overflow-hidden shadow-2xl shadow-emerald-500/20 ring-2 ring-emerald-500/30">
@@ -136,18 +139,18 @@ export default function LoginScreen() {
 
           {/* PIN Dots */}
           <div
-            className={`flex justify-center gap-4 mb-8 ${error ? 'animate-shake' : ''}`}
+            className={`flex justify-center gap-4 mb-8 ${error ? "animate-shake" : ""}`}
             onAnimationEnd={() => error && setTimeout(() => setError(false), 100)}
           >
-            {[0, 1, 2, 3].map(i => (
+            {[0, 1, 2, 3].map((i) => (
               <motion.div
                 key={i}
                 animate={
                   i < pin.length
-                    ? { scale: [1, 1.15, 1], backgroundColor: '#10B981', borderColor: '#10B981' }
+                    ? { scale: [1, 1.15, 1], backgroundColor: "#10B981", borderColor: "#10B981" }
                     : error
-                    ? { backgroundColor: 'transparent', borderColor: '#EF4444' }
-                    : { backgroundColor: '#1E293B', borderColor: '#334155' }
+                      ? { backgroundColor: "transparent", borderColor: "#EF4444" }
+                      : { backgroundColor: "#1E293B", borderColor: "#334155" }
                 }
                 transition={{ duration: 0.15 }}
                 className="w-14 h-14 rounded-2xl border-2 flex items-center justify-center"
@@ -180,19 +183,19 @@ export default function LoginScreen() {
           {/* Numpad */}
           <div className="grid grid-cols-3 gap-3">
             {NUMPAD_KEYS.flat().map((key, idx) => {
-              if (key === '') {
+              if (key === "") {
                 return <div key={`empty-${idx}`} />;
               }
-              const isDel = key === 'del';
+              const isDel = key === "del";
               return (
                 <motion.button
                   key={key + idx}
-                  whileTap={{ scale: 0.88, backgroundColor: '#334155' }}
+                  whileTap={{ scale: 0.88, backgroundColor: "#334155" }}
                   onClick={() => handleNumpadPress(key)}
                   className={`h-[68px] rounded-2xl flex items-center justify-center text-xl font-semibold transition-colors ${
                     isDel
-                      ? 'bg-transparent text-[#94A3B8] active:bg-[#1E293B]'
-                      : 'bg-[#1E293B]/80 backdrop-blur-sm border border-[#334155]/50 text-[#F1F5F9] hover:bg-[#252F42] active:bg-[#334155]'
+                      ? "bg-transparent text-[#94A3B8] active:bg-[#1E293B]"
+                      : "bg-[#1E293B]/80 backdrop-blur-sm border border-[#334155]/50 text-[#F1F5F9] hover:bg-[#252F42] active:bg-[#334155]"
                   }`}
                 >
                   {isDel ? <Delete size={22} /> : key}
@@ -213,11 +216,11 @@ export default function LoginScreen() {
               {showHint && (
                 <motion.p
                   initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
+                  animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   className="text-[12px] text-[#64748B] mt-1"
                 >
-                  PIN padrão: 1234
+                  PIN padrao: 1234
                 </motion.p>
               )}
             </AnimatePresence>

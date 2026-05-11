@@ -53,7 +53,6 @@ export default function HomeScreen() {
 
     const now = Date.now();
     await createEntry.mutateAsync({
-      userId: 1,
       type: nextType,
       timestamp: now,
       date: today,

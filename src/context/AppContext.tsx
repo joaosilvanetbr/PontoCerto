@@ -1,53 +1,53 @@
-import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
-import { trpc } from '@/providers/trpc';
-import type { AppState, AppAction, TimeEntry } from '@/types';
+import React, { createContext, useContext, useReducer, useCallback, useEffect } from "react";
+import { trpc } from "@/utils/trpc";
+import type { AppState, AppAction, TimeEntry } from "@/types";
 
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
-    case 'SET_ENTRIES':
+    case "SET_ENTRIES":
       return { ...state, entries: action.payload };
-    case 'ADD_ENTRY':
+    case "ADD_ENTRY":
       return { ...state, entries: [...state.entries, action.payload] };
-    case 'DELETE_ENTRY':
-      return { ...state, entries: state.entries.filter(e => String(e.id) !== action.payload) };
-    case 'UPDATE_ENTRY':
+    case "DELETE_ENTRY":
+      return { ...state, entries: state.entries.filter((e) => String(e.id) !== action.payload) };
+    case "UPDATE_ENTRY":
       return {
         ...state,
-        entries: state.entries.map(e =>
+        entries: state.entries.map((e) =>
           String(e.id) === String(action.payload.id)
             ? { ...e, timestamp: action.payload.timestamp, date: action.payload.date }
             : e
         ),
       };
-    case 'UPDATE_PROFILE':
+    case "UPDATE_PROFILE":
       return { ...state, profile: { ...state.profile, ...action.payload } };
-    case 'SET_AUTH':
+    case "SET_AUTH":
       return { ...state, session: { ...state.session, isAuthenticated: action.payload, lastActive: Date.now() } };
-    case 'UPDATE_LAST_ACTIVE':
+    case "UPDATE_LAST_ACTIVE":
       return { ...state, session: { ...state.session, lastActive: Date.now() } };
-    case 'SHOW_TOAST':
+    case "SHOW_TOAST":
       return { ...state, ui: { ...state.ui, toast: { ...action.payload, visible: true } } };
-    case 'HIDE_TOAST':
+    case "HIDE_TOAST":
       return { ...state, ui: { ...state.ui, toast: null } };
-    case 'SET_ACTIVE_MODAL':
+    case "SET_ACTIVE_MODAL":
       return { ...state, ui: { ...state.ui, activeModal: action.payload } };
-    case 'CLEAR_ALL_DATA':
+    case "CLEAR_ALL_DATA":
       return {
         ...state,
         entries: [],
         profile: {
-          name: '',
-          company: '',
-          role: '',
-          avatar: '',
-          pin: '1234',
-          workStartTime: '08:00',
-          workEndTime: '17:00',
+          name: "",
+          company: "",
+          role: "",
+          avatar: "",
+          pin: "1234",
+          workStartTime: "08:00",
+          workEndTime: "17:00",
           lunchDuration: 60,
           dailyTarget: 8.8,
         },
       };
-    case 'LOAD_STATE':
+    case "LOAD_STATE":
       return action.payload;
     default:
       return state;
@@ -64,18 +64,18 @@ const AppContext = createContext<AppContextValue | null>(null);
 const initialState: AppState = {
   entries: [],
   profile: {
-    name: 'Carlos Eduardo',
-    company: 'Tech Solutions Brasil',
-    role: 'Desenvolvedor Full Stack',
-    avatar: '/assets/avatar-user.jpg',
-    pin: '1234',
-    workStartTime: '08:00',
-    workEndTime: '17:00',
+    name: "Carlos Eduardo",
+    company: "Tech Solutions Brasil",
+    role: "Desenvolvedor Full Stack",
+    avatar: "/assets/avatar-user.jpg",
+    pin: "1234",
+    workStartTime: "08:00",
+    workEndTime: "17:00",
     lunchDuration: 60,
     dailyTarget: 8.8,
   },
   session: {
-    isAuthenticated: true,
+    isAuthenticated: !!localStorage.getItem("pontocerto_token"),
     lastActive: Date.now(),
   },
   ui: {
@@ -88,14 +88,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
   // Sync entries from backend
-  const { data: entriesData } = trpc.entry.list.useQuery({ userId: 1 });
+  const { data: entriesData } = trpc.entry.list.useQuery({}, { enabled: state.session.isAuthenticated });
   useEffect(() => {
     if (entriesData) {
-      const mapped: TimeEntry[] = entriesData.map((e: { id: number | string; type: TimeEntry['type']; timestamp: number; date: string }) => ({
-        ...e,
-        id: String(e.id),
-      }));
-      dispatch({ type: 'SET_ENTRIES', payload: mapped });
+      const mapped: TimeEntry[] = entriesData.map(
+        (e: { id: number | string; type: TimeEntry["type"]; timestamp: number; date: string }) => ({
+          ...e,
+          id: String(e.id),
+        })
+      );
+      dispatch({ type: "SET_ENTRIES", payload: mapped });
     }
   }, [entriesData]);
 
@@ -108,7 +110,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
 export function useAppState() {
   const ctx = useContext(AppContext);
-  if (!ctx) throw new Error('useAppState must be used within AppProvider');
+  if (!ctx) throw new Error("useAppState must be used within AppProvider");
   return ctx;
 }
 
@@ -129,12 +131,15 @@ export function useEntryMutations() {
 export function useToast() {
   const { dispatch } = useAppState();
 
-  const showToast = useCallback((message: string, type: 'success' | 'error' | 'warning' = 'success') => {
-    dispatch({ type: 'SHOW_TOAST', payload: { message, type } });
-    setTimeout(() => {
-      dispatch({ type: 'HIDE_TOAST' });
-    }, 2500);
-  }, [dispatch]);
+  const showToast = useCallback(
+    (message: string, type: "success" | "error" | "warning" = "success") => {
+      dispatch({ type: "SHOW_TOAST", payload: { message, type } });
+      setTimeout(() => {
+        dispatch({ type: "HIDE_TOAST" });
+      }, 2500);
+    },
+    [dispatch]
+  );
 
   return { showToast };
 }
