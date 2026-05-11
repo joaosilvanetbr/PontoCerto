@@ -1,4 +1,4 @@
-INSERT INTO users (name, company, role, avatar, pin, work_start_time, work_end_time, lunch_duration, daily_target) VALUES ('Carlos Eduardo', 'Tech Solutions Brasil', 'Desenvolvedor Full Stack', '/assets/avatar-user.jpg', '1234', '08:00', '17:00', 60, 528);
+INSERT INTO users (name, company, role, avatar, pin, work_start_time, work_end_time, lunch_duration, daily_target) VALUES ('Carlos Eduardo', 'Tech Solutions Brasil', 'Desenvolvedor Full Stack', '/assets/avatar-user.jpg', '$2b$10$8u8iSayhuSyBW2vndOwK9up/aITmA5AuRcTz6oxrWM/WVX2QNp.Zy', '08:00', '17:00', 60, 528);
 
 INSERT INTO time_entries (user_id, type, timestamp, date) VALUES (1, 'in', 1746438000000, '2025-05-05');
 INSERT INTO time_entries (user_id, type, timestamp, date) VALUES (1, 'lunch-out', 1746459600000, '2025-05-05');

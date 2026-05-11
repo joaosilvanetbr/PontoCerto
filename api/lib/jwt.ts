@@ -1,29 +1,69 @@
+/**
+ * JWT Utilities - PontoCerto Security Module
+ *
+ * STRICT REQUIREMENTS:
+ * - JWT_SECRET MUST be set in environment variables
+ * - NO fallback secret (fails loudly if missing)
+ * - HS256 algorithm only
+ * - 7-day expiration
+ */
 import { SignJWT, jwtVerify } from "jose";
 
-// Secret key for JWT signing - uses env variable or fallback for dev
-function getSecretKey(env?: { JWT_SECRET?: string }) {
-  const secret = env?.JWT_SECRET || "pontocerto-dev-secret-key-2026-change-in-production";
+export class JwtError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "JwtError";
+  }
+}
+
+function getSecretKey(env?: { JWT_SECRET?: string }): Uint8Array {
+  const secret = env?.JWT_SECRET;
+  if (!secret) {
+    throw new JwtError(
+      "JWT_SECRET environment variable is required. " +
+        "Set it in Cloudflare Dashboard > Workers & Pages > Your Project > Settings > Environment Variables"
+    );
+  }
+  if (secret.length < 32) {
+    throw new JwtError("JWT_SECRET must be at least 32 characters long for security");
+  }
   return new TextEncoder().encode(secret);
 }
 
-export async function createToken(payload: { userId: number; pin: string }, env?: { JWT_SECRET?: string }) {
-  return new SignJWT(payload)
+export interface TokenPayload {
+  userId: number;
+  pin: string;
+}
+
+export async function createToken(
+  payload: TokenPayload,
+  env?: { JWT_SECRET?: string }
+): Promise<string> {
+  const secret = getSecretKey(env);
+  return new SignJWT({ userId: payload.userId, pin: payload.pin })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
     .setAudience("pontocerto")
     .setIssuer("pontocerto-api")
-    .sign(getSecretKey(env));
+    .sign(secret);
 }
 
-export async function verifyToken(token: string, env?: { JWT_SECRET?: string }) {
+export async function verifyToken(
+  token: string,
+  env?: { JWT_SECRET?: string }
+): Promise<TokenPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, getSecretKey(env), {
+    const secret = getSecretKey(env);
+    const { payload } = await jwtVerify(token, secret, {
       clockTolerance: 60,
       audience: "pontocerto",
       issuer: "pontocerto-api",
     });
-    return payload as { userId: number; pin: string };
+    return {
+      userId: payload.userId as number,
+      pin: payload.pin as string,
+    };
   } catch {
     return null;
   }

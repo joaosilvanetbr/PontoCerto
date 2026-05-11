@@ -1,3 +1,10 @@
+/**
+ * tRPC Middleware - PontoCerto
+ *
+ * Procedures:
+ * - publicQuery: open endpoints (health check)
+ * - authedQuery: requires valid JWT token
+ */
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import type { TrpcContext } from "./context";

@@ -1,6 +1,16 @@
-import React, { createContext, useContext, useReducer, useCallback, useEffect } from "react";
+/**
+ * App Context - PontoCerto
+ *
+ * Features:
+ * - tRPC integration with JWT auth
+ * - Session timeout (30 min inactivity)
+ * - Logout clears token and session
+ */
+import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from "react";
 import { trpc } from "@/utils/trpc";
 import type { AppState, AppAction, TimeEntry } from "@/types";
+
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
@@ -35,17 +45,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         entries: [],
-        profile: {
-          name: "",
-          company: "",
-          role: "",
-          avatar: "",
-          pin: "1234",
-          workStartTime: "08:00",
-          workEndTime: "17:00",
-          lunchDuration: 60,
-          dailyTarget: 8.8,
-        },
+        session: { isAuthenticated: false, lastActive: Date.now() },
       };
     case "LOAD_STATE":
       return action.payload;
@@ -57,6 +57,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
 interface AppContextValue {
   state: AppState;
   dispatch: React.Dispatch<AppAction>;
+  logout: () => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -68,7 +69,7 @@ const initialState: AppState = {
     company: "Tech Solutions Brasil",
     role: "Desenvolvedor Full Stack",
     avatar: "/assets/avatar-user.jpg",
-    pin: "1234",
+    pin: "****",
     workStartTime: "08:00",
     workEndTime: "17:00",
     lunchDuration: 60,
@@ -86,9 +87,43 @@ const initialState: AppState = {
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Logout function
+  const logout = useCallback(() => {
+    localStorage.removeItem("pontocerto_token");
+    dispatch({ type: "SET_AUTH", payload: false });
+    dispatch({ type: "CLEAR_ALL_DATA" });
+    window.location.reload();
+  }, []);
+
+  // Session timeout
+  useEffect(() => {
+    if (!state.session.isAuthenticated) return;
+
+    const resetTimeout = () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        logout();
+      }, SESSION_TIMEOUT_MS);
+    };
+
+    resetTimeout();
+
+    const events = ["click", "touchstart", "keydown"];
+    events.forEach((e) => window.addEventListener(e, resetTimeout));
+
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, resetTimeout));
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [state.session.isAuthenticated, logout]);
 
   // Sync entries from backend
-  const { data: entriesData } = trpc.entry.list.useQuery({}, { enabled: state.session.isAuthenticated });
+  const { data: entriesData } = trpc.entry.list.useQuery(
+    {},
+    { enabled: state.session.isAuthenticated }
+  );
   useEffect(() => {
     if (entriesData) {
       const mapped: TimeEntry[] = entriesData.map(
@@ -102,7 +137,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [entriesData]);
 
   return (
-    <AppContext.Provider value={{ state, dispatch }}>
+    <AppContext.Provider value={{ state, dispatch, logout }}>
       {children}
     </AppContext.Provider>
   );
@@ -126,6 +161,20 @@ export function useEntryMutations() {
     onSuccess: () => utils.entry.list.invalidate(),
   });
   return { createEntry, updateEntry, deleteEntry };
+}
+
+export function useAuthMutations() {
+  const utils = trpc.useUtils();
+  const login = trpc.auth.login.useMutation();
+  const changePin = trpc.auth.changePin.useMutation({
+    onSuccess: (data) => {
+      if (data.token) {
+        localStorage.setItem("pontocerto_token", data.token);
+      }
+      utils.invalidate();
+    },
+  });
+  return { login, changePin };
 }
 
 export function useToast() {
