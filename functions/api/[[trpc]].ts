@@ -36,6 +36,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   } catch (err) {
     // If fetchRequestHandler throws, we still need CORS headers so the
     // frontend can read the error response (not a opaque CORS failure).
+    console.error("[tRPC Error]", err);
     const message = err instanceof Error ? err.message : "Internal server error";
     const response = new Response(
       JSON.stringify({ error: message }),
