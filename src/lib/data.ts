@@ -82,7 +82,7 @@ export const MOCK_PROFILE: UserProfile = {
   company: 'Tech Solutions Brasil',
   role: 'Desenvolvedor Full Stack',
   avatar: '/assets/avatar-user.jpg',
-  pin: '1234',
+  username: '',
   workStartTime: '08:00',
   workEndTime: '17:00',
   lunchDuration: 60,

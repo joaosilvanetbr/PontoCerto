@@ -2,7 +2,8 @@
  * tRPC Router - PontoCerto
  *
  * All endpoints with security:
- * - auth.login: rate-limited, bcrypt PIN verification
+ * - auth.login: rate-limited, bcrypt password verification
+ * - auth.register: public user creation
  * - entry.*: JWT-authenticated
  * - user.*: public read, JWT for sensitive ops
  */
@@ -12,7 +13,7 @@ import { createRouter, publicQuery, authedQuery } from "./middleware";
 import { createDb } from "@db/connection";
 import { users, timeEntries } from "@db/schema";
 import { createToken } from "./lib/jwt";
-import { verifyPin, hashPin } from "./lib/hash";
+import { verifyPassword, hashPassword } from "./lib/hash";
 import { checkRateLimit, recordFailedAttempt, clearAttempts } from "./lib/rate-limit";
 
 export const appRouter = createRouter({
@@ -23,7 +24,8 @@ export const appRouter = createRouter({
   auth: createRouter({
     login: publicQuery
       .input(z.object({
-        pin: z.string().length(4).regex(/^\d{4}$/, "PIN deve conter apenas numeros"),
+        username: z.string().min(3).max(50),
+        password: z.string().min(6).max(100),
       }))
       .mutation(async ({ ctx, input }) => {
         // Rate limiting check
@@ -37,52 +39,78 @@ export const appRouter = createRouter({
         }
 
         const db = createDb(ctx.env.DB);
-        const user = await db.select().from(users).limit(1);
+        const user = await db.select().from(users).where(eq(users.username, input.username)).limit(1);
         if (!user[0]) {
           recordFailedAttempt(ctx.req);
-          throw new Error("Usuario nao encontrado");
+          throw new Error("Usuario ou senha incorretos");
         }
 
-        // Verify PIN with bcrypt
-        const valid = await verifyPin(input.pin, user[0].pin);
+        // Verify password with bcrypt
+        const valid = await verifyPassword(input.password, user[0].password);
         if (!valid) {
           recordFailedAttempt(ctx.req);
-          throw new Error("PIN incorreto");
+          throw new Error("Usuario ou senha incorretos");
         }
 
         // Success - clear attempts and generate token
         clearAttempts(ctx.req);
-        const token = await createToken({ userId: user[0].id, pin: user[0].pin }, ctx.env);
-        return { token, user: user[0] };
+        const token = await createToken({ userId: user[0].id, username: user[0].username }, ctx.env);
+        const { password: _pw, ...userWithoutPassword } = user[0];
+        return { token, user: userWithoutPassword };
+      }),
+
+    register: publicQuery
+      .input(z.object({
+        username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_]+$/, "Username deve conter apenas letras, numeros e underscore"),
+        password: z.string().min(6).max(100),
+        name: z.string().min(1).max(100),
+        company: z.string().min(1).max(100),
+        role: z.string().min(1).max(100),
+        avatar: z.string().optional(),
+        workStartTime: z.string().regex(/^\d{2}:\d{2}$/).default("08:00"),
+        workEndTime: z.string().regex(/^\d{2}:\d{2}$/).default("17:00"),
+        lunchDuration: z.number().min(15).max(180).default(60),
+        dailyTarget: z.number().min(60).max(1440).default(528),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = createDb(ctx.env.DB);
+        const hashedPassword = await hashPassword(input.password);
+        const result = await db.insert(users).values({
+          ...input,
+          password: hashedPassword,
+        }).returning();
+        const { password: _pw, ...userWithoutPassword } = result[0];
+        return userWithoutPassword;
       }),
 
     me: authedQuery.query(async ({ ctx }) => {
       const db = createDb(ctx.env.DB);
       const user = await db.select().from(users).where(eq(users.id, ctx.user!.userId)).limit(1);
       if (!user[0]) throw new Error("Usuario nao encontrado");
-      return user[0];
+      const { password: _pw, ...userWithoutPassword } = user[0];
+      return userWithoutPassword;
     }),
 
-    changePin: authedQuery
+    changePassword: authedQuery
       .input(z.object({
-        currentPin: z.string().length(4).regex(/^\d{4}$/),
-        newPin: z.string().length(4).regex(/^\d{4}$/),
+        currentPassword: z.string().min(6).max(100),
+        newPassword: z.string().min(6).max(100),
       }))
       .mutation(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
         const user = await db.select().from(users).where(eq(users.id, ctx.user!.userId)).limit(1);
         if (!user[0]) throw new Error("Usuario nao encontrado");
 
-        const valid = await verifyPin(input.currentPin, user[0].pin);
-        if (!valid) throw new Error("PIN atual incorreto");
+        const valid = await verifyPassword(input.currentPassword, user[0].password);
+        if (!valid) throw new Error("Senha atual incorreta");
 
-        const hashedNewPin = await hashPin(input.newPin);
+        const hashedNewPassword = await hashPassword(input.newPassword);
         await db.update(users)
-          .set({ pin: hashedNewPin })
+          .set({ password: hashedNewPassword })
           .where(eq(users.id, ctx.user!.userId));
 
-        // Generate new token with updated pin
-        const token = await createToken({ userId: user[0].id, pin: input.newPin }, ctx.env);
+        // Generate new token with updated context
+        const token = await createToken({ userId: user[0].id, username: user[0].username }, ctx.env);
         return { token, success: true };
       }),
   }),
@@ -92,16 +120,19 @@ export const appRouter = createRouter({
     get: publicQuery.query(async ({ ctx }) => {
       const db = createDb(ctx.env.DB);
       const result = await db.select().from(users).limit(1);
-      return result[0] ?? null;
+      if (!result[0]) return null;
+      const { password: _pw, ...userWithoutPassword } = result[0];
+      return userWithoutPassword;
     }),
 
     create: publicQuery
       .input(z.object({
+        username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_]+$/, "Username deve conter apenas letras, numeros e underscore"),
+        password: z.string().min(6).max(100),
         name: z.string().min(1).max(100),
         company: z.string().min(1).max(100),
         role: z.string().min(1).max(100),
         avatar: z.string().optional(),
-        pin: z.string().length(4).regex(/^\d{4}$/),
         workStartTime: z.string().regex(/^\d{2}:\d{2}$/).default("08:00"),
         workEndTime: z.string().regex(/^\d{2}:\d{2}$/).default("17:00"),
         lunchDuration: z.number().min(15).max(180).default(60),
@@ -109,12 +140,13 @@ export const appRouter = createRouter({
       }))
       .mutation(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
-        const hashedPin = await hashPin(input.pin);
+        const hashedPassword = await hashPassword(input.password);
         const result = await db.insert(users).values({
           ...input,
-          pin: hashedPin,
+          password: hashedPassword,
         }).returning();
-        return result[0];
+        const { password: _pw, ...userWithoutPassword } = result[0];
+        return userWithoutPassword;
       }),
 
     update: authedQuery

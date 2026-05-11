@@ -13,7 +13,7 @@ export interface UserProfile {
   company: string;
   role: string;
   avatar: string;
-  pin: string;
+  username: string;
   workStartTime: string;
   workEndTime: string;
   lunchDuration: number;

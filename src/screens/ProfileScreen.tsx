@@ -5,13 +5,13 @@ import { useAppState, useAuthMutations, useToast } from "@/context/AppContext";
 
 export default function ProfileScreen() {
   const { state, logout } = useAppState();
-  const { changePin } = useAuthMutations();
+  const { changePassword } = useAuthMutations();
   const { showToast } = useToast();
   const [notificationsOn, setNotificationsOn] = useState(true);
-  const [showChangePin, setShowChangePin] = useState(false);
-  const [currentPin, setCurrentPin] = useState("");
-  const [newPin, setNewPin] = useState("");
-  const [confirmPin, setConfirmPin] = useState("");
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const scheduleItems = [
     { key: "workStartTime", label: "Horario de Entrada", value: state.profile.workStartTime },
@@ -20,27 +20,27 @@ export default function ProfileScreen() {
     { key: "dailyTarget", label: "Meta Diaria", value: `${Math.floor(state.profile.dailyTarget)}h ${Math.round((state.profile.dailyTarget % 1) * 60)}min` },
   ];
 
-  const handleChangePin = async () => {
-    if (newPin !== confirmPin) {
-      showToast("Os PINs nao coincidem", "error");
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      showToast("As senhas nao coincidem", "error");
       return;
     }
-    if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
-      showToast("PIN deve ter 4 numeros", "error");
+    if (newPassword.length < 6) {
+      showToast("A nova senha deve ter no minimo 6 caracteres", "error");
       return;
     }
     try {
-      const result = await changePin.mutateAsync({ currentPin, newPin });
+      const result = await changePassword.mutateAsync({ currentPassword, newPassword });
       if (result.token) {
         localStorage.setItem("pontocerto_token", result.token);
       }
-      setShowChangePin(false);
-      setCurrentPin("");
-      setNewPin("");
-      setConfirmPin("");
-      showToast("PIN alterado com sucesso", "success");
+      setShowChangePassword(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      showToast("Senha alterada com sucesso", "success");
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Erro ao alterar PIN";
+      const message = err instanceof Error ? err.message : "Erro ao alterar senha";
       showToast(message, "error");
     }
   };
@@ -68,14 +68,15 @@ export default function ProfileScreen() {
           <h2 className="text-lg font-bold text-[#F1F5F9]">{state.profile.name}</h2>
           <p className="text-[14px] text-[#94A3B8] mt-0.5">{state.profile.company}</p>
           <p className="text-[12px] text-[#64748B] mt-0.5">{state.profile.role}</p>
+          <p className="text-[11px] text-[#475569] mt-1">@{state.profile.username}</p>
         </motion.div>
 
-        {/* Change PIN */}
+        {/* Change Password */}
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="mb-4">
-          <button onClick={() => setShowChangePin(true)} className="w-full bg-[#1E293B] rounded-xl px-4 py-3.5 flex items-center justify-between active:bg-[#334155]">
+          <button onClick={() => setShowChangePassword(true)} className="w-full bg-[#1E293B] rounded-xl px-4 py-3.5 flex items-center justify-between active:bg-[#334155]">
             <div className="flex items-center gap-3">
               <Lock size={18} className="text-emerald-500" />
-              <span className="text-[15px] text-[#F1F5F9]">Alterar PIN</span>
+              <span className="text-[15px] text-[#F1F5F9]">Alterar Senha</span>
             </div>
             <ChevronRight size={16} className="text-[#64748B]" />
           </button>
@@ -157,35 +158,35 @@ export default function ProfileScreen() {
         </div>
       </div>
 
-      {/* Change PIN Modal */}
-      {showChangePin && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70" onClick={() => setShowChangePin(false)}>
+      {/* Change Password Modal */}
+      {showChangePassword && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70" onClick={() => setShowChangePassword(false)}>
           <div className="bg-[#1E293B] rounded-2xl p-6 w-[85%] max-w-[320px]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2 mb-1">
               <Lock size={18} className="text-emerald-500" />
-              <h3 className="text-lg font-semibold text-[#F1F5F9]">Alterar PIN</h3>
+              <h3 className="text-lg font-semibold text-[#F1F5F9]">Alterar Senha</h3>
             </div>
-            <p className="text-[12px] text-[#64748B] mb-4">Digite seu PIN atual e o novo PIN de 4 digitos</p>
+            <p className="text-[12px] text-[#64748B] mb-4">Digite sua senha atual e a nova senha</p>
 
             <div className="space-y-3 mb-5">
               <div>
-                <label className="text-[12px] text-[#94A3B8] mb-1 block">PIN atual</label>
-                <input type="password" inputMode="numeric" maxLength={4} value={currentPin} onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, ""))} className="w-full h-11 bg-[#0F172A] border border-[#334155] rounded-xl px-4 text-[#F1F5F9] text-center text-lg tracking-[0.5em] focus:outline-none focus:border-emerald-500" placeholder="****" />
+                <label className="text-[12px] text-[#94A3B8] mb-1 block">Senha atual</label>
+                <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full h-11 bg-[#0F172A] border border-[#334155] rounded-xl px-4 text-[#F1F5F9] text-[14px] focus:outline-none focus:border-emerald-500" placeholder="••••••" />
               </div>
               <div>
-                <label className="text-[12px] text-[#94A3B8] mb-1 block">Novo PIN</label>
-                <input type="password" inputMode="numeric" maxLength={4} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ""))} className="w-full h-11 bg-[#0F172A] border border-[#334155] rounded-xl px-4 text-[#F1F5F9] text-center text-lg tracking-[0.5em] focus:outline-none focus:border-emerald-500" placeholder="****" />
+                <label className="text-[12px] text-[#94A3B8] mb-1 block">Nova senha</label>
+                <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full h-11 bg-[#0F172A] border border-[#334155] rounded-xl px-4 text-[#F1F5F9] text-[14px] focus:outline-none focus:border-emerald-500" placeholder="Minimo 6 caracteres" />
               </div>
               <div>
-                <label className="text-[12px] text-[#94A3B8] mb-1 block">Confirmar novo PIN</label>
-                <input type="password" inputMode="numeric" maxLength={4} value={confirmPin} onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))} className="w-full h-11 bg-[#0F172A] border border-[#334155] rounded-xl px-4 text-[#F1F5F9] text-center text-lg tracking-[0.5em] focus:outline-none focus:border-emerald-500" placeholder="****" />
+                <label className="text-[12px] text-[#94A3B8] mb-1 block">Confirmar nova senha</label>
+                <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full h-11 bg-[#0F172A] border border-[#334155] rounded-xl px-4 text-[#F1F5F9] text-[14px] focus:outline-none focus:border-emerald-500" placeholder="••••••" />
               </div>
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => setShowChangePin(false)} className="flex-1 h-11 bg-[#334155] rounded-xl text-[#F1F5F9] font-medium text-sm">Cancelar</button>
-              <button onClick={handleChangePin} disabled={!currentPin || !newPin || !confirmPin || changePin.isPending} className="flex-1 h-11 bg-emerald-500 rounded-xl text-white font-medium text-sm disabled:opacity-50">
-                {changePin.isPending ? "..." : "Alterar"}
+              <button onClick={() => setShowChangePassword(false)} className="flex-1 h-11 bg-[#334155] rounded-xl text-[#F1F5F9] font-medium text-sm">Cancelar</button>
+              <button onClick={handleChangePassword} disabled={!currentPassword || !newPassword || !confirmPassword || changePassword.isPending} className="flex-1 h-11 bg-emerald-500 rounded-xl text-white font-medium text-sm disabled:opacity-50">
+                {changePassword.isPending ? "..." : "Alterar"}
               </button>
             </div>
           </div>
@@ -194,4 +195,3 @@ export default function ProfileScreen() {
     </div>
   );
 }
-

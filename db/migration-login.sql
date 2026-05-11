@@ -1,7 +1,12 @@
--- Cloudflare D1 Schema (SQLite)
--- PontoCerto - Controle de Ponto
+-- Migration: Login por usuario e senha
+-- Remove PIN, adiciona username e password
+-- Limpa dados antigos (sem usuarios cadastrados)
 
-CREATE TABLE IF NOT EXISTS users (
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS usuarios;
+DROP TABLE IF EXISTS time_entries;
+
+CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL UNIQUE,
   password TEXT NOT NULL,
@@ -17,15 +22,11 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at INTEGER DEFAULT (unixepoch())
 );
 
-CREATE TABLE IF NOT EXISTS time_entries (
+CREATE TABLE time_entries (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
-  type TEXT NOT NULL CHECK(type IN ('in', 'lunch-out', 'lunch-in', 'out')),
+  type TEXT NOT NULL,
   timestamp INTEGER NOT NULL,
   date TEXT NOT NULL,
-  created_at INTEGER DEFAULT (unixepoch()),
-  FOREIGN KEY (user_id) REFERENCES users(id)
+  created_at INTEGER DEFAULT (unixepoch())
 );
-
-CREATE INDEX IF NOT EXISTS idx_entries_user_date ON time_entries(user_id, date);
-CREATE INDEX IF NOT EXISTS idx_entries_date ON time_entries(date);
