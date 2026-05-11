@@ -34,9 +34,7 @@ export const appRouter = createRouter({
         password: z.string().min(6).max(100),
       }))
       .mutation(async ({ ctx, input }) => {
-        const db = createDb(ctx.env.DB);
-
-        const rateLimit = await checkRateLimit(ctx.req, db);
+        const rateLimit = await checkRateLimit(ctx.req, ctx.env.DB);
         if (!rateLimit.allowed) {
           throw new Error(
             rateLimit.blocked
@@ -45,19 +43,20 @@ export const appRouter = createRouter({
           );
         }
 
+        const db = createDb(ctx.env.DB);
         const user = await db.select().from(users).where(eq(users.username, input.username)).limit(1);
         if (!user[0]) {
-          await recordFailedAttempt(ctx.req, db);
+          await recordFailedAttempt(ctx.req, ctx.env.DB);
           throw new Error("Usuario ou senha incorretos");
         }
 
         const valid = await verifyPassword(input.password, user[0].password);
         if (!valid) {
-          await recordFailedAttempt(ctx.req, db);
+          await recordFailedAttempt(ctx.req, ctx.env.DB);
           throw new Error("Usuario ou senha incorretos");
         }
 
-        await clearAttempts(ctx.req, db);
+        await clearAttempts(ctx.req, ctx.env.DB);
         const token = await createToken({ userId: user[0].id, username: user[0].username }, ctx.env);
         setTokenCookie(ctx.resHeaders, token);
 
