@@ -75,12 +75,20 @@ export const appRouter = createRouter({
       .mutation(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
         const hashedPassword = await hashPassword(input.password);
-        const result = await db.insert(users).values({
-          ...input,
-          password: hashedPassword,
-        }).returning();
-        const { password: _pw, ...userWithoutPassword } = result[0];
-        return userWithoutPassword;
+        try {
+          const result = await db.insert(users).values({
+            ...input,
+            password: hashedPassword,
+          }).returning();
+          const { password: _pw, ...userWithoutPassword } = result[0];
+          return userWithoutPassword;
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "";
+          if (message.includes("UNIQUE constraint failed") || message.includes("unique constraint")) {
+            throw new Error("Este nome de usuario ja esta em uso");
+          }
+          throw new Error("Erro ao criar conta. Tente novamente.");
+        }
       }),
 
     me: authedQuery.query(async ({ ctx }) => {
@@ -141,12 +149,20 @@ export const appRouter = createRouter({
       .mutation(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
         const hashedPassword = await hashPassword(input.password);
-        const result = await db.insert(users).values({
-          ...input,
-          password: hashedPassword,
-        }).returning();
-        const { password: _pw, ...userWithoutPassword } = result[0];
-        return userWithoutPassword;
+        try {
+          const result = await db.insert(users).values({
+            ...input,
+            password: hashedPassword,
+          }).returning();
+          const { password: _pw, ...userWithoutPassword } = result[0];
+          return userWithoutPassword;
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "";
+          if (message.includes("UNIQUE constraint failed") || message.includes("unique constraint")) {
+            throw new Error("Este nome de usuario ja esta em uso");
+          }
+          throw new Error("Erro ao criar conta. Tente novamente.");
+        }
       }),
 
     update: authedQuery
