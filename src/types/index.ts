@@ -10,8 +10,8 @@ export interface TimeEntry {
 
 export interface UserProfile {
   name: string;
-  company: string;
-  role: string;
+  company?: string;
+  role?: string;
   avatar: string;
   username: string;
   workStartTime: string;

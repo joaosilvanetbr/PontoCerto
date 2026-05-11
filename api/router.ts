@@ -64,8 +64,6 @@ export const appRouter = createRouter({
         username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_]+$/, "Username deve conter apenas letras, numeros e underscore"),
         password: z.string().min(6).max(100),
         name: z.string().min(1).max(100),
-        company: z.string().min(1).max(100),
-        role: z.string().min(1).max(100),
         avatar: z.string().optional(),
         workStartTime: z.string().regex(/^\d{2}:\d{2}$/).default("08:00"),
         workEndTime: z.string().regex(/^\d{2}:\d{2}$/).default("17:00"),
@@ -79,6 +77,8 @@ export const appRouter = createRouter({
           const result = await db.insert(users).values({
             ...input,
             password: hashedPassword,
+            company: "",
+            role: "",
           }).returning();
           const { password: _pw, ...userWithoutPassword } = result[0];
           return userWithoutPassword;
@@ -138,8 +138,6 @@ export const appRouter = createRouter({
         username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_]+$/, "Username deve conter apenas letras, numeros e underscore"),
         password: z.string().min(6).max(100),
         name: z.string().min(1).max(100),
-        company: z.string().min(1).max(100),
-        role: z.string().min(1).max(100),
         avatar: z.string().optional(),
         workStartTime: z.string().regex(/^\d{2}:\d{2}$/).default("08:00"),
         workEndTime: z.string().regex(/^\d{2}:\d{2}$/).default("17:00"),
@@ -153,6 +151,8 @@ export const appRouter = createRouter({
           const result = await db.insert(users).values({
             ...input,
             password: hashedPassword,
+            company: "",
+            role: "",
           }).returning();
           const { password: _pw, ...userWithoutPassword } = result[0];
           return userWithoutPassword;

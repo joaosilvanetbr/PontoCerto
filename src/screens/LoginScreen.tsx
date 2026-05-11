@@ -1,7 +1,7 @@
 /**
  * Login Screen - PontoCerto
  *
- * Login e Cadastro com usuario e senha
+ * Login e Cadastro com usuario, senha e nome
  */
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,8 +25,6 @@ export default function LoginScreen() {
   const [regPassword, setRegPassword] = useState("");
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
   const [regName, setRegName] = useState("");
-  const [regCompany, setRegCompany] = useState("");
-  const [regRole, setRegRole] = useState("");
 
   const handleLogin = async () => {
     if (!username.trim() || !password) {
@@ -50,8 +48,8 @@ export default function LoginScreen() {
   };
 
   const handleRegister = async () => {
-    if (!regUsername.trim() || !regPassword || !regName.trim() || !regCompany.trim() || !regRole.trim()) {
-      setError("Preencha todos os campos obrigatorios");
+    if (!regUsername.trim() || !regPassword || !regName.trim()) {
+      setError("Preencha usuario, senha e nome");
       return;
     }
     if (regPassword !== regConfirmPassword) {
@@ -69,8 +67,6 @@ export default function LoginScreen() {
         username: regUsername.trim(),
         password: regPassword,
         name: regName.trim(),
-        company: regCompany.trim(),
-        role: regRole.trim(),
       });
       // Auto login after register
       const result = await login.mutateAsync({ username: regUsername.trim(), password: regPassword });
@@ -223,7 +219,7 @@ export default function LoginScreen() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.2 }}
-                className="space-y-3 max-h-[360px] overflow-y-auto scrollbar-hide pr-1"
+                className="space-y-3"
               >
                 <input
                   type="text"
@@ -257,23 +253,9 @@ export default function LoginScreen() {
                 />
                 <input
                   type="text"
-                  placeholder="Nome completo"
+                  placeholder="Seu nome"
                   value={regName}
                   onChange={(e) => setRegName(e.target.value)}
-                  className="w-full h-11 bg-[#1E293B] border border-[#334155] rounded-xl px-4 text-[#F1F5F9] text-[14px] placeholder:text-[#64748B] focus:outline-none focus:border-emerald-500 transition-colors"
-                />
-                <input
-                  type="text"
-                  placeholder="Empresa"
-                  value={regCompany}
-                  onChange={(e) => setRegCompany(e.target.value)}
-                  className="w-full h-11 bg-[#1E293B] border border-[#334155] rounded-xl px-4 text-[#F1F5F9] text-[14px] placeholder:text-[#64748B] focus:outline-none focus:border-emerald-500 transition-colors"
-                />
-                <input
-                  type="text"
-                  placeholder="Cargo"
-                  value={regRole}
-                  onChange={(e) => setRegRole(e.target.value)}
                   className="w-full h-11 bg-[#1E293B] border border-[#334155] rounded-xl px-4 text-[#F1F5F9] text-[14px] placeholder:text-[#64748B] focus:outline-none focus:border-emerald-500 transition-colors"
                 />
                 <button
