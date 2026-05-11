@@ -32,7 +32,7 @@ function getSecretKey(env?: { JWT_SECRET?: string }): Uint8Array {
 
 export interface TokenPayload {
   userId: number;
-  pin: string;
+  username: string;
 }
 
 export async function createToken(
@@ -40,7 +40,7 @@ export async function createToken(
   env?: { JWT_SECRET?: string }
 ): Promise<string> {
   const secret = getSecretKey(env);
-  return new SignJWT({ userId: payload.userId, pin: payload.pin })
+  return new SignJWT({ userId: payload.userId, username: payload.username })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
@@ -62,7 +62,7 @@ export async function verifyToken(
     });
     return {
       userId: payload.userId as number,
-      pin: payload.pin as string,
+      username: payload.username as string,
     };
   } catch {
     return null;

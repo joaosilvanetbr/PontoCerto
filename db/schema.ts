@@ -3,11 +3,12 @@ import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 // Tabela de usuários (perfil)
 export const users = sqliteTable("users", {
   id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
   name: text("name").notNull(),
   company: text("company").notNull(),
   role: text("role").notNull(),
   avatar: text("avatar"),
-  pin: text("pin").notNull(),
   workStartTime: text("work_start_time").notNull().default("08:00"),
   workEndTime: text("work_end_time").notNull().default("17:00"),
   lunchDuration: integer("lunch_duration", { mode: "number" }).notNull().default(60),

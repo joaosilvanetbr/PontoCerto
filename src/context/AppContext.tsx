@@ -65,11 +65,11 @@ const AppContext = createContext<AppContextValue | null>(null);
 const initialState: AppState = {
   entries: [],
   profile: {
-    name: "Carlos Eduardo",
-    company: "Tech Solutions Brasil",
-    role: "Desenvolvedor Full Stack",
+    name: "",
+    company: "",
+    role: "",
     avatar: "/assets/avatar-user.jpg",
-    pin: "****",
+    username: "",
     workStartTime: "08:00",
     workEndTime: "17:00",
     lunchDuration: 60,
@@ -119,6 +119,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
   }, [state.session.isAuthenticated, logout]);
 
+  // Sync user profile from backend
+  const { data: userData } = trpc.auth.me.useQuery(undefined, {
+    enabled: state.session.isAuthenticated,
+  });
+  useEffect(() => {
+    if (userData) {
+      dispatch({
+        type: "UPDATE_PROFILE",
+        payload: {
+          name: userData.name,
+          company: userData.company,
+          role: userData.role,
+          avatar: userData.avatar || "/assets/avatar-user.jpg",
+          username: userData.username,
+          workStartTime: userData.workStartTime,
+          workEndTime: userData.workEndTime,
+          lunchDuration: userData.lunchDuration,
+          dailyTarget: userData.dailyTarget / 60,
+        },
+      });
+    }
+  }, [userData]);
+
   // Sync entries from backend
   const { data: entriesData } = trpc.entry.list.useQuery(
     {},
@@ -166,7 +189,8 @@ export function useEntryMutations() {
 export function useAuthMutations() {
   const utils = trpc.useUtils();
   const login = trpc.auth.login.useMutation();
-  const changePin = trpc.auth.changePin.useMutation({
+  const register = trpc.auth.register.useMutation();
+  const changePassword = trpc.auth.changePassword.useMutation({
     onSuccess: (data) => {
       if (data.token) {
         localStorage.setItem("pontocerto_token", data.token);
@@ -174,7 +198,7 @@ export function useAuthMutations() {
       utils.invalidate();
     },
   });
-  return { login, changePin };
+  return { login, register, changePassword };
 }
 
 export function useToast() {

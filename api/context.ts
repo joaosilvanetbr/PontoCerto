@@ -10,7 +10,7 @@ export type TrpcContext = {
   req: Request;
   resHeaders: Headers;
   env: Env;
-  user?: { userId: number; pin: string };
+  user?: { userId: number; username: string };
 };
 
 export async function createContext(
