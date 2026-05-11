@@ -1,20 +1,13 @@
-name = "ponto-facil"
-compatibility_date = "2025-01-01"
+name = "pontocerto"
+compatibility_date = "2025-05-01"
 compatibility_flags = ["nodejs_compat"]
 
+# D1 Database binding
 [[d1_databases]]
 binding = "DB"
-database_name = "ponto-facil-db"
-database_id = "00000000-0000-0000-0000-000000000000"  # Replace with actual D1 database ID after creation
+database_name = "pontocerto-db"
+database_id = "00000000-0000-0000-0000-000000000000"
 
-[build]
-command = "npm run build"
-
+# Pages site configuration (for wrangler pages deploy)
 [site]
 bucket = "./dist/public"
-
-# Dev local D1 binding (optional - uses wrangler d1 local)
-[[env.dev.d1_databases]]
-binding = "DB"
-database_name = "ponto-facil-dev"
-database_id = "dev-local"
