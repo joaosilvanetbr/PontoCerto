@@ -84,10 +84,14 @@ export const appRouter = createRouter({
           return userWithoutPassword;
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : "";
+          console.error("[auth.register error]", err);
           if (message.includes("UNIQUE constraint failed") || message.includes("unique constraint")) {
             throw new Error("Este nome de usuario ja esta em uso");
           }
-          throw new Error("Erro ao criar conta. Tente novamente.");
+          if (message.includes("Cannot read properties of undefined") || message.includes("undefined")) {
+            throw new Error("Erro de configuracao do banco de dados. Contate o administrador.");
+          }
+          throw new Error("Erro ao criar conta: " + message);
         }
       }),
 
