@@ -1,15 +1,34 @@
-type AppError = { tag: "app_error"; status: number; message: string };
-
-function appError(status: number, message: string): AppError {
-  return { tag: "app_error", status, message };
+export class AppError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number = 400,
+    public code: string = "BAD_REQUEST"
+  ) {
+    super(message);
+    this.name = "AppError";
+  }
 }
 
-export const Errors = {
-  badRequest: (msg: string) => appError(400, msg),
-  unauthorized: (msg: string) => appError(401, msg),
-  forbidden: (msg: string) => appError(403, msg),
-  notFound: (msg: string) => appError(404, msg),
-  internal: (msg: string) => appError(500, msg),
-} as const;
+export function badRequest(message: string): AppError {
+  return new AppError(message, 400, "BAD_REQUEST");
+}
 
-export type { AppError };
+export function unauthorized(message: string = "Nao autorizado"): AppError {
+  return new AppError(message, 401, "UNAUTHORIZED");
+}
+
+export function forbidden(message: string = "Acesso negado"): AppError {
+  return new AppError(message, 403, "FORBIDDEN");
+}
+
+export function notFound(message: string = "Nao encontrado"): AppError {
+  return new AppError(message, 404, "NOT_FOUND");
+}
+
+export function internal(message: string = "Erro interno do servidor"): AppError {
+  return new AppError(message, 500, "INTERNAL_ERROR");
+}
+
+export function rateLimited(message: string = "Muitas tentativas. Aguarde um momento."): AppError {
+  return new AppError(message, 429, "RATE_LIMITED");
+}

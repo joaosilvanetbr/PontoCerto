@@ -16,7 +16,7 @@ export default function Toast() {
           transition={{ duration: 0.25, ease: 'easeOut' }}
           className="fixed top-4 left-0 right-0 z-[100] flex justify-center pointer-events-none"
         >
-          <div className="bg-[#1E293B] shadow-lg rounded-xl px-5 py-3 flex items-center gap-2.5 max-w-[80%] pointer-events-auto">
+          <div className="bg-app-card shadow-lg rounded-xl px-5 py-3 flex items-center gap-2.5 max-w-[80%] pointer-events-auto">
             {toast.type === 'success' && (
               <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
             )}
@@ -26,7 +26,7 @@ export default function Toast() {
                 className={toast.type === 'error' ? 'text-red-500 shrink-0' : 'text-amber-500 shrink-0'}
               />
             )}
-            <span className="text-[13px] text-[#F1F5F9] whitespace-nowrap">{toast.message}</span>
+            <span className="text-[13px] text-app whitespace-nowrap">{toast.message}</span>
           </div>
         </motion.div>
       )}

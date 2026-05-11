@@ -43,15 +43,15 @@ export default function EntryEditor({ entryId, entryType, timestamp, date, compa
     <div className="flex items-center gap-0.5">
       <button
         onClick={() => setIsEditing(true)}
-        className="w-7 h-7 flex items-center justify-center rounded-lg active:bg-[#334155]"
+        className="w-7 h-7 flex items-center justify-center rounded-lg active:bg-app-border/50"
       >
-        <Pencil size={13} className="text-[#64748B]" />
+        <Pencil size={13} className="text-app-muted" />
       </button>
       <button
         onClick={() => setShowConfirm(true)}
         className="w-7 h-7 flex items-center justify-center rounded-lg active:bg-red-500/10"
       >
-        <Trash2 size={13} className="text-[#64748B]" />
+        <Trash2 size={13} className="text-app-muted" />
       </button>
     </div>
   );
@@ -71,19 +71,19 @@ export default function EntryEditor({ entryId, entryType, timestamp, date, compa
               className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70"
               onClick={() => setIsEditing(false)}
             >
-              <div className="bg-[#1E293B] rounded-2xl p-6 w-[85%] max-w-[300px]" onClick={e => e.stopPropagation()}>
-                <h3 className="text-lg font-semibold text-[#F1F5F9] mb-4">Editar {entryType}</h3>
+              <div className="bg-app-card rounded-2xl p-6 w-[85%] max-w-[300px]" onClick={e => e.stopPropagation()}>
+                <h3 className="text-lg font-semibold text-app mb-4">Editar {entryType}</h3>
                 <input
                   type="time"
                   value={editTime}
                   onChange={(e) => setEditTime(e.target.value)}
-                  className="w-full h-12 bg-[#0F172A] border border-[#334155] rounded-xl px-4 text-[#F1F5F9] text-lg text-center focus:outline-none focus:border-emerald-500 mb-4"
+                  className="w-full h-12 bg-app-input border border-app rounded-xl px-4 text-app text-lg text-center focus:outline-none focus:border-emerald-500 mb-4"
                   autoFocus
                 />
                 <div className="flex gap-3">
                   <button
                     onClick={() => setIsEditing(false)}
-                    className="flex-1 h-11 bg-[#334155] rounded-xl text-[#F1F5F9] font-medium text-sm"
+                    className="flex-1 h-11 bg-app-border rounded-xl text-app font-medium text-sm"
                   >
                     Cancelar
                   </button>
@@ -109,15 +109,15 @@ export default function EntryEditor({ entryId, entryType, timestamp, date, compa
               className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70"
               onClick={() => setShowConfirm(false)}
             >
-              <div className="bg-[#1E293B] rounded-2xl p-6 w-[85%] max-w-[300px]" onClick={e => e.stopPropagation()}>
-                <h3 className="text-lg font-semibold text-[#F1F5F9] mb-3">Confirmar exclusão</h3>
-                <p className="text-[13px] text-[#94A3B8] mb-5">
+              <div className="bg-app-card rounded-2xl p-6 w-[85%] max-w-[300px]" onClick={e => e.stopPropagation()}>
+                <h3 className="text-lg font-semibold text-app mb-3">Confirmar exclusão</h3>
+                <p className="text-[13px] text-app-secondary mb-5">
                   Remover registro de {entryType} às {formatTime(timestamp)}?
                 </p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowConfirm(false)}
-                    className="flex-1 h-11 bg-[#334155] rounded-xl text-[#F1F5F9] font-medium text-sm"
+                    className="flex-1 h-11 bg-app-border rounded-xl text-app font-medium text-sm"
                   >
                     Cancelar
                   </button>
@@ -149,13 +149,13 @@ export default function EntryEditor({ entryId, entryType, timestamp, date, compa
             type="time"
             value={editTime}
             onChange={(e) => setEditTime(e.target.value)}
-            className="h-9 bg-[#0F172A] border border-[#334155] rounded-lg px-2 text-[#F1F5F9] text-sm focus:outline-none focus:border-emerald-500"
+            className="h-9 bg-app-input border border-app rounded-lg px-2 text-app text-sm focus:outline-none focus:border-emerald-500"
             autoFocus
           />
           <button onClick={handleSave} className="h-9 px-3 rounded-lg bg-emerald-500/20 text-emerald-500 text-sm font-medium active:bg-emerald-500/30">
             Salvar
           </button>
-          <button onClick={() => { setEditTime(formatTime(timestamp)); setIsEditing(false); }} className="h-9 px-3 rounded-lg bg-[#334155] text-[#94A3B8] text-sm active:bg-[#475569]">
+          <button onClick={() => { setEditTime(formatTime(timestamp)); setIsEditing(false); }} className="h-9 px-3 rounded-lg bg-app-border text-app-secondary text-sm active:bg-app-border/80">
             Cancelar
           </button>
         </motion.div>
@@ -173,15 +173,15 @@ export default function EntryEditor({ entryId, entryType, timestamp, date, compa
             className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70"
             onClick={() => setShowConfirm(false)}
           >
-            <div className="bg-[#1E293B] rounded-2xl p-6 w-[85%] max-w-[300px]" onClick={e => e.stopPropagation()}>
-              <h3 className="text-lg font-semibold text-[#F1F5F9] mb-3">Confirmar exclusão</h3>
-              <p className="text-[13px] text-[#94A3B8] mb-5">
+            <div className="bg-app-card rounded-2xl p-6 w-[85%] max-w-[300px]" onClick={e => e.stopPropagation()}>
+              <h3 className="text-lg font-semibold text-app mb-3">Confirmar exclusão</h3>
+              <p className="text-[13px] text-app-secondary mb-5">
                 Remover registro de {entryType} às {formatTime(timestamp)}?
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowConfirm(false)}
-                  className="flex-1 h-11 bg-[#334155] rounded-xl text-[#F1F5F9] font-medium text-sm"
+                  className="flex-1 h-11 bg-app-border rounded-xl text-app font-medium text-sm"
                 >
                   Cancelar
                 </button>

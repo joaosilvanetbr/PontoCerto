@@ -2,19 +2,25 @@
  * tRPC Router - PontoCerto
  *
  * All endpoints with security:
- * - auth.login: rate-limited, bcrypt password verification
+ * - auth.login: rate-limited, bcrypt password verification, Set-Cookie httpOnly JWT
  * - auth.register: public user creation
- * - entry.*: JWT-authenticated
+ * - entry.*: JWT-authenticated with ownership checks
  * - user.*: public read, JWT for sensitive ops
  */
 import { z } from "zod";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, like } from "drizzle-orm";
 import { createRouter, publicQuery, authedQuery } from "./middleware";
 import { createDb } from "@db/connection";
 import { users, timeEntries } from "@db/schema";
 import { createToken } from "./lib/jwt";
 import { verifyPassword, hashPassword } from "./lib/hash";
 import { checkRateLimit, recordFailedAttempt, clearAttempts } from "./lib/rate-limit";
+
+const TOKEN_COOKIE_OPTIONS = "HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=604800";
+
+function setTokenCookie(resHeaders: Headers, token: string): void {
+  resHeaders.append("Set-Cookie", `pontocerto_token=${token}; ${TOKEN_COOKIE_OPTIONS}`);
+}
 
 export const appRouter = createRouter({
   // ===== HEALTH =====
@@ -28,8 +34,9 @@ export const appRouter = createRouter({
         password: z.string().min(6).max(100),
       }))
       .mutation(async ({ ctx, input }) => {
-        // Rate limiting check
-        const rateLimit = checkRateLimit(ctx.req);
+        const db = createDb(ctx.env.DB);
+
+        const rateLimit = await checkRateLimit(ctx.req, db);
         if (!rateLimit.allowed) {
           throw new Error(
             rateLimit.blocked
@@ -38,25 +45,24 @@ export const appRouter = createRouter({
           );
         }
 
-        const db = createDb(ctx.env.DB);
         const user = await db.select().from(users).where(eq(users.username, input.username)).limit(1);
         if (!user[0]) {
-          recordFailedAttempt(ctx.req);
+          await recordFailedAttempt(ctx.req, db);
           throw new Error("Usuario ou senha incorretos");
         }
 
-        // Verify password with bcrypt
         const valid = await verifyPassword(input.password, user[0].password);
         if (!valid) {
-          recordFailedAttempt(ctx.req);
+          await recordFailedAttempt(ctx.req, db);
           throw new Error("Usuario ou senha incorretos");
         }
 
-        // Success - clear attempts and generate token
-        clearAttempts(ctx.req);
+        await clearAttempts(ctx.req, db);
         const token = await createToken({ userId: user[0].id, username: user[0].username }, ctx.env);
+        setTokenCookie(ctx.resHeaders, token);
+
         const { password: _pw, ...userWithoutPassword } = user[0];
-        return { token, user: userWithoutPassword };
+        return { user: userWithoutPassword };
       }),
 
     register: publicQuery
@@ -121,9 +127,9 @@ export const appRouter = createRouter({
           .set({ password: hashedNewPassword })
           .where(eq(users.id, ctx.user!.userId));
 
-        // Generate new token with updated context
         const token = await createToken({ userId: user[0].id, username: user[0].username }, ctx.env);
-        return { token, success: true };
+        setTokenCookie(ctx.resHeaders, token);
+        return { success: true };
       }),
   }),
 
@@ -241,7 +247,11 @@ export const appRouter = createRouter({
       .mutation(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
         const { id, ...data } = input;
-        const result = await db.update(timeEntries).set(data).where(eq(timeEntries.id, id)).returning();
+        const result = await db.update(timeEntries)
+          .set(data)
+          .where(and(eq(timeEntries.id, id), eq(timeEntries.userId, ctx.user!.userId)))
+          .returning();
+        if (result.length === 0) throw new Error("Registro nao encontrado ou acesso negado");
         return result[0];
       }),
 
@@ -249,7 +259,8 @@ export const appRouter = createRouter({
       .input(z.object({ id: z.number().positive() }))
       .mutation(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
-        await db.delete(timeEntries).where(eq(timeEntries.id, input.id));
+        await db.delete(timeEntries)
+          .where(and(eq(timeEntries.id, input.id), eq(timeEntries.userId, ctx.user!.userId)));
         return { success: true };
       }),
 
@@ -261,10 +272,12 @@ export const appRouter = createRouter({
       .query(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
         const prefix = `${input.year}-${String(input.month).padStart(2, "0")}`;
-        const all = await db.select().from(timeEntries)
-          .where(eq(timeEntries.userId, ctx.user!.userId))
+        return db.select().from(timeEntries)
+          .where(and(
+            eq(timeEntries.userId, ctx.user!.userId),
+            like(timeEntries.date, `${prefix}%`)
+          ))
           .orderBy(desc(timeEntries.timestamp));
-        return all.filter(e => e.date.startsWith(prefix));
       }),
   }),
 });

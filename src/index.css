@@ -6,26 +6,61 @@
 
 @layer base {
   :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 160 84% 39%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 160 84% 39%;
+    --radius: 0.75rem;
+
+    --app-bg: #ffffff;
+    --app-surface: #f8fafc;
+    --app-card: #ffffff;
+    --app-border: #e2e8f0;
+    --app-input: #f1f5f9;
+    --app-text: #0f172a;
+    --app-text-secondary: #475569;
+    --app-text-muted: #94a3b8;
+    --app-highlight: #f1f5f9;
+  }
+
+  .dark {
     --background: 222 47% 11%;
     --foreground: 210 40% 96%;
     --card: 217 33% 17%;
     --card-foreground: 210 40% 96%;
     --popover: 217 33% 17%;
     --popover-foreground: 210 40% 96%;
-    --primary: 160 84% 39%;
-    --primary-foreground: 0 0% 100%;
     --secondary: 215 25% 27%;
     --secondary-foreground: 210 40% 96%;
     --muted: 215 25% 27%;
     --muted-foreground: 215 16% 47%;
-    --accent: 160 84% 39%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
     --border: 215 25% 27%;
     --input: 215 25% 27%;
-    --ring: 160 84% 39%;
-    --radius: 0.75rem;
+
+    --app-bg: #0F172A;
+    --app-surface: #0F172A;
+    --app-card: #1E293B;
+    --app-border: #334155;
+    --app-input: #0F172A;
+    --app-text: #F1F5F9;
+    --app-text-secondary: #94A3B8;
+    --app-text-muted: #64748B;
+    --app-highlight: #252F42;
   }
 
   * {
@@ -38,6 +73,19 @@
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
   }
+}
+
+@layer components {
+  .bg-app { background-color: var(--app-bg); }
+  .bg-app-surface { background-color: var(--app-surface); }
+  .bg-app-card { background-color: var(--app-card); }
+  .bg-app-input { background-color: var(--app-input); }
+  .bg-app-highlight { background-color: var(--app-highlight); }
+  .border-app { border-color: var(--app-border); }
+  .text-app { color: var(--app-text); }
+  .text-app-secondary { color: var(--app-text-secondary); }
+  .text-app-muted { color: var(--app-text-muted); }
+  .placeholder-app::placeholder { color: var(--app-text-muted); }
 }
 
 @layer utilities {

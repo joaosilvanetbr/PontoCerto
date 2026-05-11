@@ -112,8 +112,8 @@ export default function ReportsScreen() {
         animate={{ opacity: 1 }}
         className="px-5 pt-5 pb-4"
       >
-        <h1 className="text-[28px] font-bold text-[#F1F5F9] mb-3">Relatórios</h1>
-        <div className="flex bg-[#1E293B] rounded-xl p-1">
+        <h1 className="text-[28px] font-bold text-app mb-3">Relatórios</h1>
+        <div className="flex bg-app-card rounded-xl p-1">
           {(['semana', 'mes'] as const).map(p => (
             <button
               key={p}
@@ -121,7 +121,7 @@ export default function ReportsScreen() {
               className={`flex-1 py-2.5 text-[13px] font-semibold rounded-lg transition-colors ${
                 period === p
                   ? 'bg-emerald-500 text-white'
-                  : 'text-[#94A3B8] hover:text-[#F1F5F9]'
+                  : 'text-app-secondary hover:text-app'
               }`}
             >
               {p === 'semana' ? 'Semana' : 'Mês'}
@@ -137,26 +137,26 @@ export default function ReportsScreen() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-[#1E293B] rounded-2xl p-4 mb-5"
+          className="bg-app-card rounded-2xl p-4 mb-5"
         >
-          <h2 className="text-lg font-semibold text-[#F1F5F9] mb-4">Resumo do Período</h2>
+          <h2 className="text-lg font-semibold text-app mb-4">Resumo do Período</h2>
           <div className="grid grid-cols-2 gap-4">
             {[
-              { label: 'Horas Trabalhadas', value: formatDuration(stats.totalWorked), icon: TrendingUp, color: 'text-[#F1F5F9]' },
+              { label: 'Horas Trabalhadas', value: formatDuration(stats.totalWorked), icon: TrendingUp, color: 'text-app' },
               { label: 'Horas Extras', value: formatDuration(stats.overtime), icon: TrendingUp, color: 'text-emerald-500' },
               { label: 'Horas a Trabalhar', value: formatDuration(stats.remaining), icon: TrendingDown, color: 'text-amber-500' },
-              { label: 'Dias Trabalhados', value: `${stats.workDays}`, icon: TrendingUp, color: 'text-[#F1F5F9]' },
+              { label: 'Dias Trabalhados', value: `${stats.workDays}`, icon: TrendingUp, color: 'text-app' },
             ].map((stat, idx) => (
               <motion.div
                 key={stat.label}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 + idx * 0.1 }}
-                className="bg-[#0F172A] rounded-xl p-3"
+                className="bg-app rounded-xl p-3"
               >
                 <div className="flex items-center gap-1.5 mb-1">
                   <stat.icon size={12} className={stat.color} />
-                  <span className="text-[10px] text-[#64748B] uppercase tracking-wide">{stat.label}</span>
+                  <span className="text-[10px] text-app-muted uppercase tracking-wide">{stat.label}</span>
                 </div>
                 <span className={`text-xl font-bold ${stat.color}`}>{stat.value}</span>
               </motion.div>
@@ -169,13 +169,13 @@ export default function ReportsScreen() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-[#1E293B] rounded-2xl p-4 mb-5"
+          className="bg-app-card rounded-2xl p-4 mb-5"
         >
-          <h2 className="text-lg font-semibold text-[#F1F5F9] mb-4">Horas por Dia</h2>
+          <h2 className="text-lg font-semibold text-app mb-4">Horas por Dia</h2>
           <div className="relative">
             {/* Target line */}
             <div
-              className="absolute left-0 right-0 border-t border-dashed border-[#64748B] z-10"
+              className="absolute left-0 right-0 border-t border-dashed border-app-muted z-10"
               style={{ bottom: `${(state.profile.dailyTarget / maxHours) * 120}px` }}
             />
 
@@ -204,7 +204,7 @@ export default function ReportsScreen() {
                         }}
                       />
                     </div>
-                    <span className="text-[9px] text-[#64748B] mt-1 truncate max-w-full">
+                    <span className="text-[9px] text-app-muted mt-1 truncate max-w-full">
                       {d.label}
                     </span>
                   </motion.div>
@@ -220,26 +220,26 @@ export default function ReportsScreen() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
         >
-          <h2 className="text-lg font-semibold text-[#F1F5F9] mb-3">Exportar</h2>
+          <h2 className="text-lg font-semibold text-app mb-3">Exportar</h2>
           <div className="flex gap-3">
             <button
               onClick={handleExportCSV}
-              className="flex-1 bg-[#1E293B] rounded-xl p-4 flex items-center gap-3 active:bg-[#334155] transition-colors"
+              className="flex-1 bg-app-card rounded-xl p-4 flex items-center gap-3 active:bg-app-border/50 transition-colors"
             >
               <FileText size={20} className="text-emerald-500" />
               <div className="text-left">
-                <span className="text-[13px] font-semibold text-[#F1F5F9] block">Exportar CSV</span>
-                <span className="text-[11px] text-[#64748B]">Download do arquivo</span>
+                <span className="text-[13px] font-semibold text-app block">Exportar CSV</span>
+                <span className="text-[11px] text-app-muted">Download do arquivo</span>
               </div>
             </button>
             <button
               onClick={handleShare}
-              className="flex-1 bg-[#1E293B] rounded-xl p-4 flex items-center gap-3 active:bg-[#334155] transition-colors"
+              className="flex-1 bg-app-card rounded-xl p-4 flex items-center gap-3 active:bg-app-border/50 transition-colors"
             >
               <Share2 size={20} className="text-emerald-500" />
               <div className="text-left">
-                <span className="text-[13px] font-semibold text-[#F1F5F9] block">Compartilhar</span>
-                <span className="text-[11px] text-[#64748B]">Enviar relatório</span>
+                <span className="text-[13px] font-semibold text-app block">Compartilhar</span>
+                <span className="text-[11px] text-app-muted">Enviar relatório</span>
               </div>
             </button>
           </div>
