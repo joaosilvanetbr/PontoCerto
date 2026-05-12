@@ -11,6 +11,7 @@
 
 const ALLOWED_ORIGINS = [
   "https://pontocerto.pages.dev",
+  "https://pontocerto.js.net.br",
   "http://localhost:3000",
   "http://localhost:5173",
   "http://localhost:8788",
@@ -41,7 +42,7 @@ export function getSecurityHeaders(
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self'",
-      "connect-src 'self' https://pontocerto.pages.dev",
+      "connect-src 'self' https://pontocerto.pages.dev https://pontocerto.js.net.br",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
