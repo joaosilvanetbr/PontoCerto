@@ -1,11 +1,11 @@
-# PontoCerto - Especificacao Funcional e Tecnica (pos Sprint 04)
+# PontoCerto - Especificacao Funcional e Tecnica (pos Sprint 05)
 
 ## 1) Estado atual
 
-Este documento descreve o que **esta implementado hoje** no codigo apos as Sprints 01, 02, 03 e 04.
+Este documento descreve o que **esta implementado hoje** no codigo apos as Sprints 01, 02, 03, 04 e 05.
 
 - Status da sprint: `npm install`, `npm run check`, `npm test` e `npm run build` executando com sucesso na raiz.
-- Escopo desta versao: estabilizacao tecnica + reforco de seguranca no backend + consolidacao de historico/relatorios/calculo de horas no frontend; sem adicao de novas features visuais.
+- Escopo desta versao: estabilizacao tecnica + reforco de seguranca no backend + consolidacao de historico/relatorios/calculo de horas no frontend + auditoria e correcao de confiabilidade da API em producao; sem adicao de novas features visuais.
 
 ---
 
@@ -44,6 +44,7 @@ Aplicacao de controle de ponto pessoal para:
 - `backend/api/` - rotas, contexto, middleware e libs de seguranca
 - `backend/db/` - schema e conexao
 - `backend/functions/api/[[trpc]].ts` - entrypoint para Cloudflare Pages Functions
+- `functions/api/[[trpc]].ts` - entrypoint de Functions no root para deploy do Cloudflare Pages
 
 ---
 
@@ -189,6 +190,7 @@ Aplicacao de controle de ponto pessoal para:
   - ate 5 tentativas por janela
   - bloqueio de 15 minutos
 - Headers de seguranca aplicados no backend.
+- Allowlist/CSP atualizados para incluir dominio customizado `https://pontocerto.js.net.br`.
 
 ---
 
@@ -202,6 +204,7 @@ Aplicacao de controle de ponto pessoal para:
 - Build de producao de frontend e backend via `npm run build`.
 - Cobertura frontend ampliada para calculo de horas e limites de filtros por periodo.
 - Cobertura backend ampliada para regras de CRUD seguro em `entry.update` e `entry.delete`.
+- Fluxo de API em producao endurecido para evitar parse de respostas nao-JSON no cliente tRPC.
 
 **Nao implementado**
 
@@ -229,5 +232,6 @@ Aplicacao de controle de ponto pessoal para:
 ## 9.3 Riscos conhecidos
 
 - Timezone: o agrupamento e filtros usam `date` (`YYYY-MM-DD`) e a exibicao de horario usa `timestamp` local; divergencias entre os dois campos podem causar exibicao em dia inesperado em cenarios de fuso/virada de dia.
+- Deploy: o ambiente de producao ainda depende de configuracao correta de `DB` (D1 binding) e `JWT_SECRET` no Cloudflare Pages.
 
 > Observacao: os itens acima sao marcados como "nao implementado" por nao estarem presentes no codigo atual. Nao representam compromisso de entrega sem planejamento adicional.
