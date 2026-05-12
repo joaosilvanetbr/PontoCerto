@@ -43,12 +43,15 @@ export async function checkRateLimit(req: Request, db: D1Database): Promise<Rate
 
   const windowStart = now - WINDOW_MS;
   const row = await db.prepare(
-    "SELECT COUNT(*) as count FROM rate_limits WHERE ip = ? AND attempted_at > ?"
+    "SELECT COUNT(*) as count FROM rate_limits WHERE ip = ? AND attempted_at > ? AND blocked_until = 0"
   ).bind(ip, windowStart).first<{ count: number }>();
 
   const count = row?.count ?? 0;
 
   if (count >= MAX_ATTEMPTS) {
+    await db.prepare(
+      "DELETE FROM rate_limits WHERE ip = ?"
+    ).bind(ip).run();
     await db.prepare(
       "INSERT INTO rate_limits (ip, attempted_at, blocked_until) VALUES (?, ?, ?)"
     ).bind(ip, now, now + BLOCK_DURATION_MS).run();
@@ -66,6 +69,10 @@ export async function checkRateLimit(req: Request, db: D1Database): Promise<Rate
 export async function recordFailedAttempt(req: Request, db: D1Database): Promise<void> {
   const ip = getClientIp(req);
   const now = Date.now();
+  const windowStart = now - WINDOW_MS;
+  await db.prepare(
+    "DELETE FROM rate_limits WHERE ip = ? AND attempted_at < ? AND blocked_until = 0"
+  ).bind(ip, windowStart).run();
   await db.prepare(
     "INSERT INTO rate_limits (ip, attempted_at, blocked_until) VALUES (?, ?, 0)"
   ).bind(ip, now).run();

@@ -1,4 +1,4 @@
-import type { AppState, AppAction } from '@/types';
+import type { AppState, AppAction } from "@/types";
 
 export const initialState: AppState = {
   entries: [],
@@ -17,6 +17,7 @@ export const initialState: AppState = {
   session: {
     isAuthenticated: false,
     lastActive: Date.now(),
+    sessionLoading: true,
   },
   ui: {
     toast: null,
@@ -45,6 +46,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, profile: { ...state.profile, ...action.payload } };
     case "SET_AUTH":
       return { ...state, session: { ...state.session, isAuthenticated: action.payload, lastActive: Date.now() } };
+    case "SET_SESSION_LOADED":
+      return { ...state, session: { ...state.session, sessionLoading: false } };
     case "UPDATE_LAST_ACTIVE":
       return { ...state, session: { ...state.session, lastActive: Date.now() } };
     case "SHOW_TOAST":
@@ -57,7 +60,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         entries: [],
-        session: { isAuthenticated: false, lastActive: Date.now() },
+        session: { isAuthenticated: false, lastActive: Date.now(), sessionLoading: false },
       };
     case "LOAD_STATE":
       return action.payload;

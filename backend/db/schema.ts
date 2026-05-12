@@ -28,6 +28,7 @@ export const timeEntries = sqliteTable("time_entries", {
 });
 
 export const rateLimits = sqliteTable("rate_limits", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
   ip: text("ip").notNull(),
   attemptedAt: integer("attempted_at", { mode: "number" }).notNull(),
   blockedUntil: integer("blocked_until", { mode: "number" }).notNull().default(0),

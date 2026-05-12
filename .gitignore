@@ -22,6 +22,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Dev artifacts
+dev-error.txt
+dev-output.txt
+
+# Tool config
+opencode.json
+
 # Environment variables
 .env
 .env.local

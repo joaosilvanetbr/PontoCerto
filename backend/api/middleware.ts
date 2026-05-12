@@ -29,8 +29,6 @@ const t = initTRPC.context<TrpcContext>().create({
 export const createRouter = t.router;
 export const publicQuery = t.procedure;
 
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
-
 export const authedQuery = t.procedure.use(async ({ ctx, next }) => {
   if (!ctx.user) {
     throw new AppError("Nao autenticado. Faca login primeiro.", 401, "UNAUTHORIZED");
