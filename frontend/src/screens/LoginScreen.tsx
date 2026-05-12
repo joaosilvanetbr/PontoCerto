@@ -7,6 +7,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Shield, User, Lock, Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
 import { useAppState, useAuthMutations } from "@/context/AppContext";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
 export default function LoginScreen() {
   const { dispatch } = useAppState();
@@ -37,8 +38,7 @@ export default function LoginScreen() {
       await login.mutateAsync({ username: username.trim(), password });
       dispatch({ type: "SET_AUTH", payload: true });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Erro ao fazer login";
-      setError(message);
+      setError(getErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -75,8 +75,7 @@ export default function LoginScreen() {
         return;
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Erro ao criar conta";
-      setError(message);
+      setError(getErrorMessage(err, "Nao foi possivel criar conta. Tente novamente."));
     } finally {
       setIsSubmitting(false);
     }

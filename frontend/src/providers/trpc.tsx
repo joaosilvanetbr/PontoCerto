@@ -18,8 +18,17 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
         httpBatchLink({
           url: `${getBaseUrl()}/api/trpc`,
           transformer: superjson,
-          fetch(url, options) {
-            return fetch(url, { ...options, credentials: "include" });
+          async fetch(url, options) {
+            const response = await fetch(url, { ...options, credentials: "include" });
+            const contentType = response.headers.get("content-type") || "";
+
+            // tRPC responses must be JSON; if deploy/routing returns HTML or empty content,
+            // fail with a friendly connectivity error instead of raw JSON.parse messages.
+            if (!contentType.includes("application/json")) {
+              throw new Error("Nao foi possivel conectar ao servidor. Verifique o deploy da API.");
+            }
+
+            return response;
           },
         }),
       ],

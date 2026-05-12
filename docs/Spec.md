@@ -1,11 +1,11 @@
-# PontoCerto - Especificacao Funcional e Tecnica (pos Sprint 04)
+# PontoCerto - Especificacao Funcional e Tecnica (pos Sprint 06)
 
 ## 1) Estado atual
 
-Este documento descreve o que **esta implementado hoje** no codigo apos as Sprints 01, 02, 03 e 04.
+Este documento descreve o que **esta implementado hoje** no codigo apos as Sprints 01, 02, 03, 04, 05 e 06.
 
-- Status da sprint: `npm install`, `npm run check`, `npm test` e `npm run build` executando com sucesso na raiz.
-- Escopo desta versao: estabilizacao tecnica + reforco de seguranca no backend + consolidacao de historico/relatorios/calculo de horas no frontend; sem adicao de novas features visuais.
+- Status da sprint: `npm install`, `npm run verify` (`check + test + build`) executando com sucesso na raiz.
+- Escopo desta versao: estabilizacao tecnica + reforco de seguranca no backend + consolidacao de historico/relatorios/calculo de horas no frontend + blindagem de build/deploy/API com CI e checklist; sem adicao de novas features visuais.
 
 ---
 
@@ -44,6 +44,7 @@ Aplicacao de controle de ponto pessoal para:
 - `backend/api/` - rotas, contexto, middleware e libs de seguranca
 - `backend/db/` - schema e conexao
 - `backend/functions/api/[[trpc]].ts` - entrypoint para Cloudflare Pages Functions
+- `functions/api/[[trpc]].ts` - entrypoint de Functions no root para deploy do Cloudflare Pages
 
 ---
 
@@ -189,6 +190,7 @@ Aplicacao de controle de ponto pessoal para:
   - ate 5 tentativas por janela
   - bloqueio de 15 minutos
 - Headers de seguranca aplicados no backend.
+- Allowlist/CSP atualizados para incluir dominio customizado `https://pontocerto.js.net.br`.
 
 ---
 
@@ -197,16 +199,22 @@ Aplicacao de controle de ponto pessoal para:
 **Implementado**
 
 - Type-check via `tsc -b` (com workspaces).
-- Testes automatizados no frontend (Vitest) executados via `npm test`.
+- Testes automatizados no frontend (Vitest) executados via `npm run test --workspace=frontend`.
 - Testes automatizados no backend (Vitest) executados via `npm run test --workspace=backend`.
+- Script raiz `npm test` cobrindo frontend + backend.
 - Build de producao de frontend e backend via `npm run build`.
+- Script de verificacao unificada `npm run verify` executando `check -> test -> build`.
+- CI versionado em `.github/workflows/ci.yml` para validar `npm run verify` em `push` para `main` e `pull_request`.
 - Cobertura frontend ampliada para calculo de horas e limites de filtros por periodo.
 - Cobertura backend ampliada para regras de CRUD seguro em `entry.update` e `entry.delete`.
+- Fluxo de API em producao endurecido para evitar parse de respostas nao-JSON no cliente tRPC.
+- `frontend/vite.config.ts` blindado para carregar `@hono/vite-dev-server` apenas em `command === "serve"`.
+- `wrangler.toml` na raiz com `pages_build_output_dir = "dist/public"` e binding D1 `DB`.
+- Documentacao operacional adicionada: `docs/DEPLOY_CHECKLIST.md` e `docs/ARCHITECTURE.md`.
 
 **Nao implementado**
 
-- Execucao de testes de backend no script raiz (`npm test` hoje roda apenas frontend).
-- Pipeline CI/CD versionado no repositorio (nao ha workflow de CI no codigo atual).
+- Validacao automatizada de smoke test em ambiente de producao (ex.: `/api/trpc/ping` no dominio publicado) dentro da pipeline.
 
 ---
 
@@ -218,7 +226,6 @@ Aplicacao de controle de ponto pessoal para:
 
 ## 9.2 Nao implementado
 
-- Test suite de backend integrada ao comando padrao de testes na raiz.
 - Documentacao de API em formato OpenAPI/Swagger.
 - Controle de acesso por papeis (RBAC).
 - Integracao com provedores externos de notificacao (push/email).
@@ -229,5 +236,6 @@ Aplicacao de controle de ponto pessoal para:
 ## 9.3 Riscos conhecidos
 
 - Timezone: o agrupamento e filtros usam `date` (`YYYY-MM-DD`) e a exibicao de horario usa `timestamp` local; divergencias entre os dois campos podem causar exibicao em dia inesperado em cenarios de fuso/virada de dia.
+- Deploy: o ambiente de producao ainda depende de configuracao correta de `DB` (D1 binding) e `JWT_SECRET` no Cloudflare Pages, alem de validacao manual de smoke test apos cada publicacao.
 
 > Observacao: os itens acima sao marcados como "nao implementado" por nao estarem presentes no codigo atual. Nao representam compromisso de entrega sem planejamento adicional.

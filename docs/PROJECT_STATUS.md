@@ -100,3 +100,88 @@
 - Riscos restantes:
   - O sistema ainda nao possui CRUD de observacoes de ponto.
   - Continua o risco conhecido de divergencia entre `timestamp` e `date` em cenarios de timezone/dispositivo.
+
+## Sprint 05 - Auditoria Tecnica, Correcao de Bugs e Organizacao da Logica
+
+- Data da execucao: 2026-05-12
+- Problema investigado:
+  - Em producao, login falhando com `JSON.parse: unexpected end of data at line 1 column 1`.
+- Causa mais provavel identificada:
+  - Endpoint `/api/trpc` recebendo resposta nao-JSON (HTML/404/vazio) em ambiente de Pages.
+  - Divergencia entre runtime local (Vite + `boot.ts`) e runtime esperado de producao (Pages Function).
+  - Imports incorretos em `backend/functions/api/[[trpc]].ts`.
+- Correcoes aplicadas:
+  - Corrigidos imports da function em `backend/functions/api/[[trpc]].ts`.
+  - Criado entrypoint em `functions/api/[[trpc]].ts` para garantir estrutura esperada do Cloudflare Pages Functions no root do projeto.
+  - Endurecido fallback do cliente tRPC em `frontend/src/providers/trpc.tsx` para gerar erro amigavel quando a resposta nao for JSON.
+  - Atualizada allowlist/CSP de `backend/api/lib/security.ts` com `https://pontocerto.js.net.br`.
+- Organizacao de logica aplicada:
+  - Mantida regra de negocio existente; ajustes focados apenas em confiabilidade do fluxo frontend -> API.
+  - Sem redesign, sem mudanca de layout e sem remocao de animacoes.
+- Arquivos alterados:
+  - `backend/functions/api/[[trpc]].ts`
+  - `functions/api/[[trpc]].ts`
+  - `backend/api/lib/security.ts`
+  - `frontend/src/providers/trpc.tsx`
+  - `docs/PROJECT_STATUS.md`
+- Comandos executados:
+  - `npm run check`
+  - `npm test`
+  - `npm run test --workspace=backend`
+  - `npm run build`
+- Resultado dos testes:
+  - `npm run check`: passou.
+  - `npm test` (frontend): passou (20 testes).
+  - `npm run test --workspace=backend`: passou (18 testes).
+  - `npm run build`: passou.
+- Validacao recomendada em preview/producao:
+  - `GET/POST /api/trpc/ping`
+  - `auth.login` invalido e valido
+  - `auth.me` apos login
+  - `auth.logout`
+- Preservacao visual:
+  - visual preservado: sim.
+  - animacoes preservadas: sim.
+  - redesign realizado: nao.
+- Riscos restantes:
+  - Ainda depende de configuracao correta de bindings (`DB`) e segredo (`JWT_SECRET`) no ambiente Pages.
+  - Se deploy estiver apontando para root/build sem functions, erro pode reaparecer.
+
+## Sprint 06 - Ajuste Geral, Blindagem de Build/Deploy e Protecao contra Regressões
+
+- Data da execucao: 2026-05-12
+- Erros investigados:
+  - `npm test` e `npm run build` falhando no frontend com `Cannot read directory "../../.."` e erro de resolucao de `frontend/vite.config.ts`.
+  - Necessidade de garantir blindagem de CI, checklist de deploy e documentacao de arquitetura.
+- Causa encontrada:
+  - `frontend/vite.config.ts` carregava `@hono/vite-dev-server` em todos os comandos (incluindo build/test), usando `import.meta.dirname`, o que quebrava a carga de config pelo esbuild no ambiente local atual.
+  - Falta de pipeline CI e de script unico de verificacao para bloquear regressao antes do deploy.
+- Arquivos alterados:
+  - `frontend/vite.config.ts`
+  - `frontend/src/screens/LoginScreen.tsx`
+  - `frontend/src/utils/getErrorMessage.ts`
+  - `package.json`
+  - `.github/workflows/ci.yml`
+  - `docs/DEPLOY_CHECKLIST.md`
+  - `docs/ARCHITECTURE.md`
+  - `docs/PROJECT_STATUS.md`
+- Comandos executados:
+  - `npm install`
+  - `npm run check`
+  - `npm test`
+  - `npm run build`
+  - `npm run verify`
+- Resultado do build:
+  - `npm run build`: passou apos ajuste do `vite.config.ts`.
+- Resultado dos testes:
+  - `npm run check`: passou.
+  - `npm test`: passou (frontend e backend).
+  - `npm run verify`: passou.
+- Resultado do deploy:
+  - Nao executado localmente nesta sprint (depende do painel Cloudflare e variaveis/bindings do ambiente).
+- Pendencias:
+  - Confirmar no Cloudflare Pages: root directory, build command, build output, binding `DB` e variavel `JWT_SECRET`.
+  - Executar smoke test em ambiente publicado: `/api/trpc/ping`, login invalido/valido, `auth.me`, `logout`.
+- Riscos restantes:
+  - Se `DB`/`JWT_SECRET` estiverem ausentes no ambiente Pages, o login/API pode falhar mesmo com build local aprovado.
+  - `wrangler.toml` da raiz ainda usa `database_id = "REPLACE_WITH_D1_DATABASE_ID"`; precisa refletir o ID real no ambiente alvo.
