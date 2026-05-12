@@ -100,3 +100,49 @@
 - Riscos restantes:
   - O sistema ainda nao possui CRUD de observacoes de ponto.
   - Continua o risco conhecido de divergencia entre `timestamp` e `date` em cenarios de timezone/dispositivo.
+
+## Sprint 05 - Auditoria Tecnica, Correcao de Bugs e Organizacao da Logica
+
+- Data da execucao: 2026-05-12
+- Problema investigado:
+  - Em producao, login falhando com `JSON.parse: unexpected end of data at line 1 column 1`.
+- Causa mais provavel identificada:
+  - Endpoint `/api/trpc` recebendo resposta nao-JSON (HTML/404/vazio) em ambiente de Pages.
+  - Divergencia entre runtime local (Vite + `boot.ts`) e runtime esperado de producao (Pages Function).
+  - Imports incorretos em `backend/functions/api/[[trpc]].ts`.
+- Correcoes aplicadas:
+  - Corrigidos imports da function em `backend/functions/api/[[trpc]].ts`.
+  - Criado entrypoint em `functions/api/[[trpc]].ts` para garantir estrutura esperada do Cloudflare Pages Functions no root do projeto.
+  - Endurecido fallback do cliente tRPC em `frontend/src/providers/trpc.tsx` para gerar erro amigavel quando a resposta nao for JSON.
+  - Atualizada allowlist/CSP de `backend/api/lib/security.ts` com `https://pontocerto.js.net.br`.
+- Organizacao de logica aplicada:
+  - Mantida regra de negocio existente; ajustes focados apenas em confiabilidade do fluxo frontend -> API.
+  - Sem redesign, sem mudanca de layout e sem remocao de animacoes.
+- Arquivos alterados:
+  - `backend/functions/api/[[trpc]].ts`
+  - `functions/api/[[trpc]].ts`
+  - `backend/api/lib/security.ts`
+  - `frontend/src/providers/trpc.tsx`
+  - `docs/PROJECT_STATUS.md`
+- Comandos executados:
+  - `npm run check`
+  - `npm test`
+  - `npm run test --workspace=backend`
+  - `npm run build`
+- Resultado dos testes:
+  - `npm run check`: passou.
+  - `npm test` (frontend): passou (20 testes).
+  - `npm run test --workspace=backend`: passou (18 testes).
+  - `npm run build`: passou.
+- Validacao recomendada em preview/producao:
+  - `GET/POST /api/trpc/ping`
+  - `auth.login` invalido e valido
+  - `auth.me` apos login
+  - `auth.logout`
+- Preservacao visual:
+  - visual preservado: sim.
+  - animacoes preservadas: sim.
+  - redesign realizado: nao.
+- Riscos restantes:
+  - Ainda depende de configuracao correta de bindings (`DB`) e segredo (`JWT_SECRET`) no ambiente Pages.
+  - Se deploy estiver apontando para root/build sem functions, erro pode reaparecer.
