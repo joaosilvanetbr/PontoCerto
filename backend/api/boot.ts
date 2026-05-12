@@ -13,7 +13,7 @@ app.use("/api/trpc/*", async (c) => {
     endpoint: "/api/trpc",
     req: c.req.raw,
     router: appRouter,
-    createContext,
+    createContext: (opts) => createContext(opts, { DB: c.env?.DB, JWT_SECRET: process.env.JWT_SECRET }),
   });
 });
 app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));

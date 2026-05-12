@@ -1,4 +1,4 @@
-import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
+import { sqliteTable, integer, text, index } from "drizzle-orm/sqlite-core";
 
 // Tabela de usuários (perfil)
 export const users = sqliteTable("users", {
@@ -25,4 +25,10 @@ export const timeEntries = sqliteTable("time_entries", {
   timestamp: integer("timestamp", { mode: "number" }).notNull(), // unix timestamp in ms
   date: text("date").notNull(), // YYYY-MM-DD
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+export const rateLimits = sqliteTable("rate_limits", {
+  ip: text("ip").notNull(),
+  attemptedAt: integer("attempted_at", { mode: "number" }).notNull(),
+  blockedUntil: integer("blocked_until", { mode: "number" }).notNull().default(0),
 });

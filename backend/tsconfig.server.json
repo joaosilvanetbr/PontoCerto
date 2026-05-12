@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.server.tsbuildinfo",
+    "tsBuildInfoFile": "../node_modules/.tmp/tsconfig.server.tsbuildinfo",
     "target": "ES2022",
     "lib": ["ES2022"],
     "module": "ESNext",
@@ -15,10 +15,9 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
       "@contracts/*": ["./contracts/*"],
       "@db/*": ["./db/*"]
     }
   },
-  "include": ["api", "contracts", "db", "src/types/cloudflare.d.ts"]
+  "include": ["api", "contracts", "db", "../cloudflare.d.ts"]
 }
