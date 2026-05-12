@@ -4,10 +4,9 @@ const __dirname = import.meta.dirname
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    devServer({ entry: "api/boot.ts", exclude: [/^\/(?!api\/).*$/] }),
+    devServer({ entry: path.resolve(__dirname, "../backend/api/boot.ts"), exclude: [/^\/(?!api\/).*$/] }),
     react()],
   server: {
     port: 3000,
@@ -15,14 +14,14 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@contracts": path.resolve(__dirname, "./contracts"),
-      "@db": path.resolve(__dirname, "./db"),
-      "db": path.resolve(__dirname, "./db"),
+      "@contracts": path.resolve(__dirname, "../backend/contracts"),
+      "@db": path.resolve(__dirname, "../backend/db"),
+      "db": path.resolve(__dirname, "../backend/db"),
     },
   },
-  envDir: path.resolve(__dirname),
+  envDir: path.resolve(__dirname, ".."),
   build: {
-    outDir: path.resolve(__dirname, "dist/public"),
+    outDir: path.resolve(__dirname, "../dist/public"),
     emptyOutDir: true,
   },
 })

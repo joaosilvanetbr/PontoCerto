@@ -1,0 +1,33 @@
+{
+  "name": "backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'Backend started via frontend workspace (Vite dev server)'",
+    "build": "esbuild api/boot.ts --platform=node --bundle --format=esm --outdir=dist --banner:js=\"import { createRequire } from 'module';const require = createRequire(import.meta.url);\"",
+    "start": "NODE_ENV=production node dist/boot.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push"
+  },
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20260511.1",
+    "@hono/node-server": "^1.14.3",
+    "@trpc/server": "^11.8.1",
+    "bcryptjs": "^3.0.3",
+    "drizzle-orm": "^0.45.1",
+    "hono": "^4.8.3",
+    "jose": "^6.2.3",
+    "mysql2": "^3.14.1",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@hono/vite-dev-server": "^0.19.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^24.10.1",
+    "dotenv": "^17.2.3",
+    "drizzle-kit": "^0.31.8",
+    "esbuild": "^0.27.2"
+  }
+}

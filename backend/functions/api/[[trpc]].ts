@@ -9,9 +9,9 @@
  * - Rate limiting context
  */
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { appRouter } from "../../api/router";
-import { createContext } from "../../api/context";
-import { getSecurityHeaders, handleCors } from "../../api/lib/security";
+import { appRouter } from "../api/router";
+import { createContext } from "../api/context";
+import { getSecurityHeaders, handleCors } from "../api/lib/security";
 
 export const onRequest: PagesFunction<Env> = async (context) => {
   // Handle CORS preflight

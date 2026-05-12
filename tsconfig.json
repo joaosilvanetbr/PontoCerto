@@ -1,28 +1,16 @@
 {
   "files": [],
   "references": [
-    {
-      "path": "./tsconfig.app.json"
-    },
-    {
-      "path": "./tsconfig.node.json"
-    },
-    {
-      "path": "./tsconfig.server.json"
-    }
+    { "path": "./frontend/tsconfig.app.json" },
+    { "path": "./frontend/tsconfig.node.json" },
+    { "path": "./backend/tsconfig.server.json" }
   ],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@contracts/*": [
-        "./contracts/*"
-      ],
-      "@db/*": [
-        "./db/*"
-      ]
+      "@/*": ["./frontend/src/*"],
+      "@contracts/*": ["./backend/contracts/*"],
+      "@db/*": ["./backend/db/*"]
     }
   }
 }
