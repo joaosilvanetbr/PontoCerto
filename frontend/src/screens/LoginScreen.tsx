@@ -66,8 +66,14 @@ export default function LoginScreen() {
         name: regName.trim(),
       });
       // Auto login after register
-      await login.mutateAsync({ username: regUsername.trim(), password: regPassword });
-      dispatch({ type: "SET_AUTH", payload: true });
+      try {
+        await login.mutateAsync({ username: regUsername.trim(), password: regPassword });
+        dispatch({ type: "SET_AUTH", payload: true });
+      } catch {
+        setError("Conta criada! Faca login manualmente.");
+        setMode("login");
+        return;
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao criar conta";
       setError(message);

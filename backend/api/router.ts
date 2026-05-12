@@ -105,6 +105,12 @@ export const appRouter = createRouter({
       return userWithoutPassword;
     }),
 
+    logout: authedQuery
+      .mutation(async ({ ctx }) => {
+        ctx.resHeaders.append("Set-Cookie", "pontocerto_token=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax");
+        return { success: true };
+      }),
+
     changePassword: authedQuery
       .input(z.object({
         currentPassword: z.string().min(6).max(100),
