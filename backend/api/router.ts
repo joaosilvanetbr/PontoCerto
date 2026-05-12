@@ -93,10 +93,7 @@ export const appRouter = createRouter({
           if (message.includes("UNIQUE constraint failed") || message.includes("unique constraint")) {
             throw new Error("Este nome de usuario ja esta em uso");
           }
-          if (message.includes("Cannot read properties of undefined") || message.includes("undefined")) {
-            throw new Error("Erro de configuracao do banco de dados. Contate o administrador.");
-          }
-          throw new Error("Erro ao criar conta: " + message);
+          throw new Error("Erro ao criar conta. Tente novamente.");
         }
       }),
 
@@ -134,49 +131,16 @@ export const appRouter = createRouter({
 
   // ===== USERS =====
   user: createRouter({
-    get: publicQuery.query(async ({ ctx }) => {
+    get: authedQuery.query(async ({ ctx }) => {
       const db = createDb(ctx.env.DB);
-      const result = await db.select().from(users).limit(1);
+      const result = await db.select().from(users).where(eq(users.id, ctx.user!.userId)).limit(1);
       if (!result[0]) return null;
       const { password: _pw, ...userWithoutPassword } = result[0];
       return userWithoutPassword;
     }),
 
-    create: publicQuery
-      .input(z.object({
-        username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_]+$/, "Username deve conter apenas letras, numeros e underscore"),
-        password: z.string().min(6).max(100),
-        name: z.string().min(1).max(100),
-        avatar: z.string().optional(),
-        workStartTime: z.string().regex(/^\d{2}:\d{2}$/).default("08:00"),
-        workEndTime: z.string().regex(/^\d{2}:\d{2}$/).default("17:00"),
-        lunchDuration: z.number().min(15).max(180).default(60),
-        dailyTarget: z.number().min(60).max(1440).default(528),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const db = createDb(ctx.env.DB);
-        const hashedPassword = await hashPassword(input.password);
-        try {
-          const result = await db.insert(users).values({
-            ...input,
-            password: hashedPassword,
-            company: "",
-            role: "",
-          }).returning();
-          const { password: _pw, ...userWithoutPassword } = result[0];
-          return userWithoutPassword;
-        } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : "";
-          if (message.includes("UNIQUE constraint failed") || message.includes("unique constraint")) {
-            throw new Error("Este nome de usuario ja esta em uso");
-          }
-          throw new Error("Erro ao criar conta. Tente novamente.");
-        }
-      }),
-
     update: authedQuery
       .input(z.object({
-        id: z.number(),
         name: z.string().min(1).max(100).optional(),
         company: z.string().min(1).max(100).optional(),
         role: z.string().min(1).max(100).optional(),
@@ -188,8 +152,7 @@ export const appRouter = createRouter({
       }))
       .mutation(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
-        const { id, ...data } = input;
-        const result = await db.update(users).set(data).where(eq(users.id, id)).returning();
+        const result = await db.update(users).set(input).where(eq(users.id, ctx.user!.userId)).returning();
         return result[0];
       }),
   }),

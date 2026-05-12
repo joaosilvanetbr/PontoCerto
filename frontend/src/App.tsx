@@ -1,13 +1,6 @@
-/**
- * App Root - PontoCerto
- *
- * Session management:
- * - Auth state from localStorage token
- * - 30-min session timeout (handled by AppContext)
- * - Auto-logout on token expiry
- */
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { Shield } from "lucide-react";
 import { AppProvider, useAppState } from "@/context/AppContext";
 import Toast from "@/components/Toast";
 import BottomNav from "@/components/BottomNav";
@@ -43,6 +36,20 @@ function AnimatedRoutes() {
 
 function AppContent() {
   const { state } = useAppState();
+
+  if (state.session.sessionLoading) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center bg-app">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+        >
+          <Shield size={48} className="text-emerald-500" />
+        </motion.div>
+        <p className="text-app-secondary text-sm mt-4">Verificando sessao...</p>
+      </div>
+    );
+  }
 
   if (!state.session.isAuthenticated) {
     return <LoginScreen />;

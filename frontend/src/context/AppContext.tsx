@@ -1,16 +1,8 @@
-/**
- * App Context - PontoCerto
- *
- * Features:
- * - tRPC integration with JWT auth
- * - Session timeout (30 min inactivity)
- * - Logout clears token and session
- */
 import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from "react";
 import { trpc } from "@/utils/trpc";
 import type { AppState, AppAction, TimeEntry } from "@/types";
 
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
@@ -33,6 +25,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, profile: { ...state.profile, ...action.payload } };
     case "SET_AUTH":
       return { ...state, session: { ...state.session, isAuthenticated: action.payload, lastActive: Date.now() } };
+    case "SET_SESSION_LOADED":
+      return { ...state, session: { ...state.session, sessionLoading: false } };
     case "UPDATE_LAST_ACTIVE":
       return { ...state, session: { ...state.session, lastActive: Date.now() } };
     case "SHOW_TOAST":
@@ -45,7 +39,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         entries: [],
-        session: { isAuthenticated: false, lastActive: Date.now() },
+        session: { isAuthenticated: false, lastActive: Date.now(), sessionLoading: false },
       };
     case "LOAD_STATE":
       return action.payload;
@@ -77,8 +71,9 @@ const initialState: AppState = {
     dailyTarget: 8.8,
   },
   session: {
-    isAuthenticated: !!localStorage.getItem("pontocerto_token"),
+    isAuthenticated: false,
     lastActive: Date.now(),
+    sessionLoading: true,
   },
   ui: {
     toast: null,
@@ -90,15 +85,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Logout function
   const logout = useCallback(() => {
-    localStorage.removeItem("pontocerto_token");
+    localStorage.removeItem("pontocerto_auth");
     dispatch({ type: "SET_AUTH", payload: false });
     dispatch({ type: "CLEAR_ALL_DATA" });
     window.location.reload();
   }, []);
 
-  // Session timeout
   useEffect(() => {
     if (!state.session.isAuthenticated) return;
 
@@ -120,15 +113,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
   }, [state.session.isAuthenticated, logout]);
 
-  // Sync user profile from backend
-  const { data: userData } = trpc.auth.me.useQuery(undefined, {
-    enabled: state.session.isAuthenticated,
+  const { data: userData, isFetched } = trpc.auth.me.useQuery(undefined, {
+    retry: false,
   });
+
   useEffect(() => {
+    if (!isFetched) return;
     if (userData) {
+      dispatch({ type: "SET_AUTH", payload: true });
       dispatch({
         type: "UPDATE_PROFILE",
         payload: {
+          id: userData.id,
           name: userData.name,
           company: userData.company,
           role: userData.role,
@@ -141,9 +137,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         },
       });
     }
-  }, [userData]);
+    dispatch({ type: "SET_SESSION_LOADED" });
+  }, [isFetched, userData]);
 
-  // Sync entries from backend
   const { data: entriesData } = trpc.entry.list.useQuery(
     {},
     { enabled: state.session.isAuthenticated }
@@ -151,10 +147,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (entriesData) {
       const mapped: TimeEntry[] = entriesData.map(
-        (e: { id: number | string; type: TimeEntry["type"]; timestamp: number; date: string }) => ({
-          ...e,
-          id: String(e.id),
-        })
+        (e) => ({ ...e, id: String(e.id) })
       );
       dispatch({ type: "SET_ENTRIES", payload: mapped });
     }
@@ -189,15 +182,12 @@ export function useEntryMutations() {
 
 export function useAuthMutations() {
   const utils = trpc.useUtils();
-  const login = trpc.auth.login.useMutation();
+  const login = trpc.auth.login.useMutation({
+    onSuccess: () => utils.auth.me.invalidate(),
+  });
   const register = trpc.auth.register.useMutation();
   const changePassword = trpc.auth.changePassword.useMutation({
-    onSuccess: (data) => {
-      if (data.token) {
-        localStorage.setItem("pontocerto_token", data.token);
-      }
-      utils.invalidate();
-    },
+    onSuccess: () => utils.invalidate(),
   });
   return { login, register, changePassword };
 }

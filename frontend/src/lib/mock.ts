@@ -66,7 +66,7 @@ export function createMockState(): AppState {
   return {
     entries: createMockEntries(),
     profile: MOCK_PROFILE,
-    session: { isAuthenticated: false, lastActive: Date.now() },
+    session: { isAuthenticated: false, lastActive: Date.now(), sessionLoading: true },
     ui: { toast: null, activeModal: null },
   };
 }
@@ -84,7 +84,7 @@ export function loadState(): AppState {
     return {
       entries: JSON.parse(entriesJson),
       profile: JSON.parse(profileJson),
-      session: sessionJson ? JSON.parse(sessionJson) : { isAuthenticated: false, lastActive: Date.now() },
+      session: sessionJson ? JSON.parse(sessionJson) : { isAuthenticated: false, lastActive: Date.now(), sessionLoading: false },
       ui: { toast: null, activeModal: null },
     };
   } catch {

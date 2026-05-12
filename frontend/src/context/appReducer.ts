@@ -17,6 +17,7 @@ export const initialState: AppState = {
   session: {
     isAuthenticated: false,
     lastActive: Date.now(),
+    sessionLoading: false,
   },
   ui: {
     toast: null,
@@ -57,7 +58,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         entries: [],
-        session: { isAuthenticated: false, lastActive: Date.now() },
+        session: { isAuthenticated: false, lastActive: Date.now(), sessionLoading: false },
       };
     case "LOAD_STATE":
       return action.payload;

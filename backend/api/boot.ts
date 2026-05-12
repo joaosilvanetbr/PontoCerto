@@ -4,19 +4,34 @@ import type { HttpBindings } from "@hono/node-server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./router";
 import { createContext } from "./context";
+import { handleCors, getSecurityHeaders } from "./lib/security";
 
 const app = new Hono<{ Bindings: HttpBindings }>();
 
 app.use(bodyLimit({ maxSize: 50 * 1024 * 1024 }));
-app.use("/api/trpc/*", async (c) => {
-  return fetchRequestHandler({
-    endpoint: "/api/trpc",
-    req: c.req.raw,
-    router: appRouter,
-    createContext: (opts) => createContext(opts, { DB: c.env?.DB, JWT_SECRET: process.env.JWT_SECRET }),
-  });
+
+app.use("/api/*", async (c) => {
+  const corsResp = handleCors(c.req.raw);
+  if (corsResp) return corsResp;
+
+  let res: Response;
+  if (c.req.path.startsWith("/api/trpc")) {
+    res = await fetchRequestHandler({
+      endpoint: "/api/trpc",
+      req: c.req.raw,
+      router: appRouter,
+      createContext: (opts) => createContext(opts, { DB: c.env?.DB, JWT_SECRET: process.env.JWT_SECRET }),
+    });
+  } else {
+    res = c.json({ error: "Not Found" }, 404);
+  }
+
+  const headers = getSecurityHeaders(c.req.raw);
+  for (const [k, v] of Object.entries(headers)) {
+    res.headers.set(k, v);
+  }
+  return res;
 });
-app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 
 export default app;
 

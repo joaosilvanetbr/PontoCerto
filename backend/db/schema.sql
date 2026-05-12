@@ -31,6 +31,7 @@ CREATE INDEX IF NOT EXISTS idx_time_entries_date ON time_entries(date);
 CREATE INDEX IF NOT EXISTS idx_time_entries_user_date ON time_entries(user_id, date);
 
 CREATE TABLE IF NOT EXISTS rate_limits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   ip TEXT NOT NULL,
   attempted_at INTEGER NOT NULL,
   blocked_until INTEGER NOT NULL DEFAULT 0

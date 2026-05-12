@@ -24,6 +24,7 @@ export interface UserProfile {
 export interface SessionState {
   isAuthenticated: boolean;
   lastActive: number;
+  sessionLoading: boolean;
 }
 
 export interface ToastState {
@@ -51,6 +52,7 @@ export type AppAction =
   | { type: 'UPDATE_ENTRY'; payload: { id: string | number; timestamp: number; date: string } }
   | { type: 'UPDATE_PROFILE'; payload: Partial<UserProfile> }
   | { type: 'SET_AUTH'; payload: boolean }
+  | { type: 'SET_SESSION_LOADED' }
   | { type: 'UPDATE_LAST_ACTIVE' }
   | { type: 'SHOW_TOAST'; payload: Omit<ToastState, 'visible'> }
   | { type: 'HIDE_TOAST' }

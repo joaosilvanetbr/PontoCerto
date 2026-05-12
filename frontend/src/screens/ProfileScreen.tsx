@@ -102,7 +102,6 @@ export default function ProfileScreen() {
 
     try {
       await updateUser.mutateAsync({
-        id: state.profile.id,
         workStartTime: editWorkStartTime,
         workEndTime: editWorkEndTime,
         lunchDuration,
