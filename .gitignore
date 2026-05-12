@@ -26,6 +26,9 @@ dist-ssr
 dev-error.txt
 dev-output.txt
 
+# Tool config
+opencode.json
+
 # Environment variables
 .env
 .env.local
