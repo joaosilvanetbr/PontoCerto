@@ -20,7 +20,7 @@ app.use("/api/*", async (c) => {
       endpoint: "/api/trpc",
       req: c.req.raw,
       router: appRouter,
-      createContext: (opts) => createContext(opts, { DB: c.env?.DB, JWT_SECRET: process.env.JWT_SECRET }),
+      createContext: (opts) => createContext(opts, { DB: (c.env as any).DB, JWT_SECRET: (c.env as any).JWT_SECRET ?? process.env.JWT_SECRET }),
     });
   } else {
     res = c.json({ error: "Not Found" }, 404);

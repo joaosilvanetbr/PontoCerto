@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { appReducer, initialState } from "../context/appReducer";
-import type { AppState } from "../types";
 
 describe("appReducer", () => {
   it("should handle SET_ENTRIES", () => {

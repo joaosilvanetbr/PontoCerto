@@ -20,35 +20,47 @@ export default function EntryEditor({ entryId, entryType, timestamp, date, compa
   const [showConfirm, setShowConfirm] = useState(false);
 
   const handleSave = async () => {
-    const [hours, minutes] = editTime.split(':').map(Number);
-    const [year, month, dayNum] = date.split('-').map(Number);
-    const newTimestamp = new Date(year, month - 1, dayNum, hours, minutes).getTime();
+    try {
+      const [hours, minutes] = editTime.split(':').map(Number);
+      const [year, month, dayNum] = date.split('-').map(Number);
+      const newTimestamp = new Date(year, month - 1, dayNum, hours, minutes).getTime();
 
-    await updateEntry.mutateAsync({
-      id: Number(entryId),
-      timestamp: newTimestamp,
-      date,
-    });
-    setIsEditing(false);
-    showToast('Registro atualizado', 'success');
+      await updateEntry.mutateAsync({
+        id: Number(entryId),
+        timestamp: newTimestamp,
+        date,
+      });
+      setIsEditing(false);
+      showToast('Registro atualizado', 'success');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao atualizar registro';
+      showToast(message, 'error');
+    }
   };
 
   const handleDelete = async () => {
-    await deleteEntry.mutateAsync({ id: Number(entryId) });
-    setShowConfirm(false);
-    showToast('Registro removido', 'warning');
+    try {
+      await deleteEntry.mutateAsync({ id: Number(entryId) });
+      setShowConfirm(false);
+      showToast('Registro removido', 'warning');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao remover registro';
+      showToast(message, 'error');
+    }
   };
 
   const buttons = (
     <div className="flex items-center gap-0.5">
       <button
         onClick={() => setIsEditing(true)}
+        disabled={updateEntry.isPending || deleteEntry.isPending}
         className="w-7 h-7 flex items-center justify-center rounded-lg active:bg-app-border/50"
       >
         <Pencil size={13} className="text-app-muted" />
       </button>
       <button
         onClick={() => setShowConfirm(true)}
+        disabled={updateEntry.isPending || deleteEntry.isPending}
         className="w-7 h-7 flex items-center justify-center rounded-lg active:bg-red-500/10"
       >
         <Trash2 size={13} className="text-app-muted" />
@@ -89,9 +101,10 @@ export default function EntryEditor({ entryId, entryType, timestamp, date, compa
                   </button>
                   <button
                     onClick={handleSave}
+                    disabled={updateEntry.isPending}
                     className="flex-1 h-11 bg-emerald-500 rounded-xl text-white font-medium text-sm"
                   >
-                    Salvar
+                    {updateEntry.isPending ? '...' : 'Salvar'}
                   </button>
                 </div>
               </div>
@@ -123,9 +136,10 @@ export default function EntryEditor({ entryId, entryType, timestamp, date, compa
                   </button>
                   <button
                     onClick={handleDelete}
+                    disabled={deleteEntry.isPending}
                     className="flex-1 h-11 bg-red-500 rounded-xl text-white font-medium text-sm"
                   >
-                    Remover
+                    {deleteEntry.isPending ? '...' : 'Remover'}
                   </button>
                 </div>
               </div>
@@ -153,7 +167,7 @@ export default function EntryEditor({ entryId, entryType, timestamp, date, compa
             autoFocus
           />
           <button onClick={handleSave} className="h-9 px-3 rounded-lg bg-emerald-500/20 text-emerald-500 text-sm font-medium active:bg-emerald-500/30">
-            Salvar
+            {updateEntry.isPending ? '...' : 'Salvar'}
           </button>
           <button onClick={() => { setEditTime(formatTime(timestamp)); setIsEditing(false); }} className="h-9 px-3 rounded-lg bg-app-border text-app-secondary text-sm active:bg-app-border/80">
             Cancelar
@@ -187,9 +201,10 @@ export default function EntryEditor({ entryId, entryType, timestamp, date, compa
                 </button>
                 <button
                   onClick={handleDelete}
+                  disabled={deleteEntry.isPending}
                   className="flex-1 h-11 bg-red-500 rounded-xl text-white font-medium text-sm"
                 >
-                  Remover
+                  {deleteEntry.isPending ? '...' : 'Remover'}
                 </button>
               </div>
             </div>

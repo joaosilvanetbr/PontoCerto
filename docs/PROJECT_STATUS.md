@@ -1,0 +1,102 @@
+# Project Status
+
+## Sprint 02 - Seguranca e Validacoes do Backend
+
+- Data da execucao: 2026-05-12
+- Resumo:
+  - Sanitizacao de retorno de usuario aplicada em `auth.login`, `auth.register`, `auth.me`, `user.get` e `user.update`.
+  - Endpoints privados continuam baseados em `ctx.user.userId` como fonte de verdade.
+  - Validacao de sequencia de ponto adicionada em `entry.create`.
+  - Suite de testes backend expandida para cobrir regras criticas da sprint.
+- Arquivos alterados:
+  - `backend/api/router.ts`
+  - `backend/api/__tests__/router.security.test.ts`
+  - `backend/package.json`
+  - `docs/PROJECT_STATUS.md`
+- Comandos executados:
+  - `npm run check`
+  - `npm test`
+  - `npm run test --workspace=backend`
+  - `npm run build`
+- Resultado dos testes:
+  - `npm run check`: passou.
+  - `npm test` (frontend): passou (14 testes).
+  - `npm run test --workspace=backend`: passou (14 testes).
+  - `npm run build`: passou.
+- Pendencias encontradas:
+  - Nenhuma pendencia funcional registrada ate o momento.
+- Riscos restantes:
+  - Validacao de sequencia foi aplicada para fluxo unico por dia; se houver necessidade futura de multiplas jornadas diarias, a regra precisara ser revisitada.
+
+## Sprint 03 - Historico, Relatorios e Calculo de Horas
+
+- Data da execucao: 2026-05-12
+- Resumo:
+  - Calculo diario de horas consolidado em utilitario unico no frontend (`calculateDayTotal`) com tratamento seguro para jornadas incompletas e registros fora de ordem.
+  - Filtros de periodo (semana/mes) padronizados com helpers de faixa de datas para reduzir inconsistencias entre telas.
+  - Fluxos de Historico, Home e Relatorios alinhados para reutilizar as mesmas regras de agrupamento/ordenacao por data.
+  - Cobertura de testes ampliada para calculo de horas e limites de periodo.
+- Arquivos alterados:
+  - `frontend/src/lib/data.ts`
+  - `frontend/src/screens/ReportsScreen.tsx`
+  - `frontend/src/screens/HistoryScreen.tsx`
+  - `frontend/src/screens/HomeScreen.tsx`
+  - `frontend/src/__tests__/data.test.ts`
+  - `docs/PROJECT_STATUS.md`
+- Comandos executados:
+  - `npm run check`
+  - `npm test`
+  - `npm run test --workspace=backend`
+  - `npm run build`
+- Resultado dos testes:
+  - `npm run check`: passou.
+  - `npm test` (frontend): passou (20 testes).
+  - `npm run test --workspace=backend`: passou (14 testes).
+  - `npm run build`: passou.
+- Pendencias encontradas:
+  - Nenhuma pendencia bloqueante para o escopo da sprint.
+- Riscos restantes:
+  - O agrupamento por dia continua usando o campo textual `date` enviado no registro; se `timestamp` e `date` divergirem por timezone/dispositivo, o registro pode aparecer em dia inesperado.
+  - Nao foi introduzida validacao backend de coerencia entre `timestamp` e `date` nesta sprint (fora do escopo minimo acordado).
+- Observacoes sobre timezone:
+  - A regra ficou deterministica: filtros e agrupamentos priorizam `date` (`YYYY-MM-DD`) para consistencia visual no frontend.
+  - `formatTime(timestamp)` segue horario local do dispositivo do usuario.
+
+## Sprint 04 - CRUDs Pendentes Preservando o Visual Atual
+
+- Data da execucao: 2026-05-12
+- Auditoria de CRUDs:
+  - `entry` possui create/read/update/delete no backend e frontend.
+  - `user` possui read/update; create/delete de perfil nao foram priorizados nesta sprint.
+  - `auth` possui register/login/me/logout/changePassword.
+  - Nao ha entidade de observacoes de ponto no schema atual.
+- CRUDs implementados nesta sprint:
+  - Hardening de `entry.update` com revalidacao de sequencia do dia.
+  - Hardening de `entry.delete` com validacao de exclusao segura para nao deixar sequencia inconsistente.
+  - Ajustes minimos de UX no `EntryEditor` para loading/erro em salvar/remover.
+- CRUDs adiados:
+  - CRUD de observacoes/anotacoes de ponto (exige modelagem nova).
+  - Delete de conta de usuario (fora do escopo desta sprint).
+  - Configuracoes avancadas separadas de perfil (exigiria escopo maior).
+- Arquivos alterados:
+  - `backend/api/router.ts`
+  - `backend/api/__tests__/router.security.test.ts`
+  - `frontend/src/components/EntryEditor.tsx`
+  - `docs/PROJECT_STATUS.md`
+- Comandos executados:
+  - `npm run check`
+  - `npm test`
+  - `npm run test --workspace=backend`
+  - `npm run build`
+- Resultado dos testes:
+  - `npm run check`: passou.
+  - `npm test` (frontend): passou (20 testes).
+  - `npm run test --workspace=backend`: passou (18 testes).
+  - `npm run build`: passou.
+- Preservacao visual:
+  - visual atual preservado: sim.
+  - animacoes preservadas: sim.
+  - redesign realizado: nao.
+- Riscos restantes:
+  - O sistema ainda nao possui CRUD de observacoes de ponto.
+  - Continua o risco conhecido de divergencia entre `timestamp` e `date` em cenarios de timezone/dispositivo.

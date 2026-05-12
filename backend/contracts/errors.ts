@@ -1,11 +1,12 @@
 export class AppError extends Error {
-  constructor(
-    message: string,
-    public statusCode: number = 400,
-    public code: string = "BAD_REQUEST"
-  ) {
+  statusCode: number;
+  code: string;
+
+  constructor(message: string, statusCode: number = 400, code: string = "BAD_REQUEST") {
     super(message);
     this.name = "AppError";
+    this.statusCode = statusCode;
+    this.code = code;
   }
 }
 

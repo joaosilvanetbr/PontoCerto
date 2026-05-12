@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useAppState } from '@/context/AppContext';
 import {
   getCalendarDays, getMonthName, getTodayString,
-  calculateDayTotal, formatTime, formatDuration,
+  calculateDayTotal, formatTime, formatDuration, getEntriesByDate,
 } from '@/lib/data';
 import EntryEditor from '@/components/EntryEditor';
 import type { TimeEntry } from '@/types';
@@ -27,7 +27,7 @@ export default function HistoryScreen() {
 
   const getDayEntries = (day: number): TimeEntry[] => {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return state.entries.filter(e => e.date === dateStr).sort((a, b) => a.timestamp - b.timestamp);
+    return getEntriesByDate(state.entries, dateStr);
   };
 
   const getDayStatus = (day: number): 'complete' | 'partial' | 'empty' => {
