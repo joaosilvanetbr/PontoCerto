@@ -1,13 +1,25 @@
-import devServer from "@hono/vite-dev-server"
-import path from "path"
-const __dirname = import.meta.dirname
+import path from "node:path"
+import { fileURLToPath } from "node:url"
 import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
+import { defineConfig, type PluginOption } from "vite"
 
-export default defineConfig({
-  plugins: [
-    devServer({ entry: path.resolve(__dirname, "../backend/api/boot.ts"), exclude: [/^\/(?!api\/).*$/] }),
-    react()],
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+export default defineConfig(async ({ command }) => {
+  const plugins: PluginOption[] = [react()]
+
+  if (command === "serve") {
+    const { default: devServer } = await import("@hono/vite-dev-server")
+    plugins.unshift(
+      devServer({
+        entry: path.resolve(__dirname, "../backend/api/boot.ts"),
+        exclude: [/^\/(?!api\/).*$/],
+      }),
+    )
+  }
+
+  return {
+    plugins,
   server: {
     port: 3000,
   },
@@ -24,4 +36,5 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "../dist/public"),
     emptyOutDir: true,
   },
+  }
 })

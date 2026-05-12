@@ -146,3 +146,42 @@
 - Riscos restantes:
   - Ainda depende de configuracao correta de bindings (`DB`) e segredo (`JWT_SECRET`) no ambiente Pages.
   - Se deploy estiver apontando para root/build sem functions, erro pode reaparecer.
+
+## Sprint 06 - Ajuste Geral, Blindagem de Build/Deploy e Protecao contra Regressões
+
+- Data da execucao: 2026-05-12
+- Erros investigados:
+  - `npm test` e `npm run build` falhando no frontend com `Cannot read directory "../../.."` e erro de resolucao de `frontend/vite.config.ts`.
+  - Necessidade de garantir blindagem de CI, checklist de deploy e documentacao de arquitetura.
+- Causa encontrada:
+  - `frontend/vite.config.ts` carregava `@hono/vite-dev-server` em todos os comandos (incluindo build/test), usando `import.meta.dirname`, o que quebrava a carga de config pelo esbuild no ambiente local atual.
+  - Falta de pipeline CI e de script unico de verificacao para bloquear regressao antes do deploy.
+- Arquivos alterados:
+  - `frontend/vite.config.ts`
+  - `frontend/src/screens/LoginScreen.tsx`
+  - `frontend/src/utils/getErrorMessage.ts`
+  - `package.json`
+  - `.github/workflows/ci.yml`
+  - `docs/DEPLOY_CHECKLIST.md`
+  - `docs/ARCHITECTURE.md`
+  - `docs/PROJECT_STATUS.md`
+- Comandos executados:
+  - `npm install`
+  - `npm run check`
+  - `npm test`
+  - `npm run build`
+  - `npm run verify`
+- Resultado do build:
+  - `npm run build`: passou apos ajuste do `vite.config.ts`.
+- Resultado dos testes:
+  - `npm run check`: passou.
+  - `npm test`: passou (frontend e backend).
+  - `npm run verify`: passou.
+- Resultado do deploy:
+  - Nao executado localmente nesta sprint (depende do painel Cloudflare e variaveis/bindings do ambiente).
+- Pendencias:
+  - Confirmar no Cloudflare Pages: root directory, build command, build output, binding `DB` e variavel `JWT_SECRET`.
+  - Executar smoke test em ambiente publicado: `/api/trpc/ping`, login invalido/valido, `auth.me`, `logout`.
+- Riscos restantes:
+  - Se `DB`/`JWT_SECRET` estiverem ausentes no ambiente Pages, o login/API pode falhar mesmo com build local aprovado.
+  - `wrangler.toml` da raiz ainda usa `database_id = "REPLACE_WITH_D1_DATABASE_ID"`; precisa refletir o ID real no ambiente alvo.

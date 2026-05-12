@@ -13,7 +13,8 @@
     "start": "npm run start --workspace=backend",
     "check": "tsc -b",
     "format": "prettier --write .",
-    "test": "npm run test --workspace=frontend",
+    "test": "npm run test --workspace=frontend && npm run test --workspace=backend",
+    "verify": "npm run check && npm test && npm run build",
     "db:generate": "npm run db:generate --workspace=backend",
     "db:migrate": "npm run db:migrate --workspace=backend",
     "db:push": "npm run db:push --workspace=backend"

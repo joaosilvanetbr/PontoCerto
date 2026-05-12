@@ -1,7 +1,7 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { appRouter } from "../../../backend/api/router";
-import { createContext } from "../../../backend/api/context";
-import { getSecurityHeaders, handleCors } from "../../../backend/api/lib/security";
+import { appRouter } from "../../backend/api/router";
+import { createContext } from "../../backend/api/context";
+import { getSecurityHeaders, handleCors } from "../../backend/api/lib/security";
 
 export const onRequest: PagesFunction<Env> = async (context) => {
   const corsResponse = handleCors(context.request);
