@@ -40,11 +40,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     resetTimeout();
 
-    const events = ["click", "touchstart", "keydown"];
-    events.forEach((e) => window.addEventListener(e, resetTimeout));
+    const events = ["click", "touchstart", "keydown"] as const;
+    events.forEach((eventName) => window.addEventListener(eventName, resetTimeout));
 
     return () => {
-      events.forEach((e) => window.removeEventListener(e, resetTimeout));
+      events.forEach((eventName) => window.removeEventListener(eventName, resetTimeout));
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [state.session.isAuthenticated, logout]);
@@ -62,8 +62,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         payload: {
           id: userData.id,
           name: userData.name,
-          company: userData.company,
-          role: userData.role,
+          company: userData.company ?? undefined,
+          role: userData.role ?? undefined,
           avatar: userData.avatar || "/assets/avatar-user.jpg",
           username: userData.username,
           workStartTime: userData.workStartTime,
@@ -83,7 +83,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (entriesData) {
       const mapped: TimeEntry[] = entriesData.map(
-        (e) => ({ ...e, id: String(e.id) })
+        (entry) => ({ ...entry, id: String(entry.id) })
       );
       dispatch({ type: "SET_ENTRIES", payload: mapped });
     }

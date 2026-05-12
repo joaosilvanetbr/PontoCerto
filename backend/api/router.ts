@@ -10,16 +10,44 @@
 import { z } from "zod";
 import { eq, and, desc, like } from "drizzle-orm";
 import { createRouter, publicQuery, authedQuery } from "./middleware";
-import { createDb } from "@db/connection";
-import { users, timeEntries } from "@db/schema";
+import { createDb } from "../db/connection";
+import { users, timeEntries } from "../db/schema";
 import { createToken } from "./lib/jwt";
 import { verifyPassword, hashPassword } from "./lib/hash";
 import { checkRateLimit, recordFailedAttempt, clearAttempts } from "./lib/rate-limit";
 
 const TOKEN_COOKIE_OPTIONS = "HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=604800";
+const ENTRY_TYPE_FLOW = ["in", "lunch-out", "lunch-in", "out"] as const;
+type EntryType = (typeof ENTRY_TYPE_FLOW)[number];
 
 function setTokenCookie(resHeaders: Headers, token: string): void {
   resHeaders.append("Set-Cookie", `pontocerto_token=${token}; ${TOKEN_COOKIE_OPTIONS}`);
+}
+
+function sanitizeUser<T extends { password: string }>(user: T): Omit<T, "password"> {
+  const { password: _pw, ...safeUser } = user;
+  return safeUser;
+}
+
+function getAllowedNextTypes(previousType?: EntryType): EntryType[] {
+  if (!previousType) return ["in"];
+  if (previousType === "in") return ["lunch-out", "out"];
+  if (previousType === "lunch-out") return ["lunch-in"];
+  if (previousType === "lunch-in") return ["out"];
+  return [];
+}
+
+function isValidEntrySequence(entries: Array<{ type: string }>): boolean {
+  if (entries.length === 0) return true;
+  if (entries[0].type !== "in") return false;
+
+  for (let i = 1; i < entries.length; i++) {
+    const previousType = entries[i - 1].type as EntryType;
+    const allowedNext = getAllowedNextTypes(previousType);
+    if (!allowedNext.includes(entries[i].type as EntryType)) return false;
+  }
+
+  return true;
 }
 
 export const appRouter = createRouter({
@@ -60,8 +88,7 @@ export const appRouter = createRouter({
         const token = await createToken({ userId: user[0].id, username: user[0].username }, ctx.env);
         setTokenCookie(ctx.resHeaders, token);
 
-        const { password: _pw, ...userWithoutPassword } = user[0];
-        return { user: userWithoutPassword };
+        return { user: sanitizeUser(user[0]) };
       }),
 
     register: publicQuery
@@ -85,8 +112,7 @@ export const appRouter = createRouter({
             company: "",
             role: "",
           }).returning();
-          const { password: _pw, ...userWithoutPassword } = result[0];
-          return userWithoutPassword;
+          return sanitizeUser(result[0]);
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : "";
           console.error("[auth.register error]", err);
@@ -101,8 +127,7 @@ export const appRouter = createRouter({
       const db = createDb(ctx.env.DB);
       const user = await db.select().from(users).where(eq(users.id, ctx.user!.userId)).limit(1);
       if (!user[0]) throw new Error("Usuario nao encontrado");
-      const { password: _pw, ...userWithoutPassword } = user[0];
-      return userWithoutPassword;
+      return sanitizeUser(user[0]);
     }),
 
     logout: authedQuery
@@ -141,8 +166,7 @@ export const appRouter = createRouter({
       const db = createDb(ctx.env.DB);
       const result = await db.select().from(users).where(eq(users.id, ctx.user!.userId)).limit(1);
       if (!result[0]) return null;
-      const { password: _pw, ...userWithoutPassword } = result[0];
-      return userWithoutPassword;
+      return sanitizeUser(result[0]);
     }),
 
     update: authedQuery
@@ -159,7 +183,7 @@ export const appRouter = createRouter({
       .mutation(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
         const result = await db.update(users).set(input).where(eq(users.id, ctx.user!.userId)).returning();
-        return result[0];
+        return sanitizeUser(result[0]);
       }),
   }),
 
@@ -199,6 +223,17 @@ export const appRouter = createRouter({
       }))
       .mutation(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
+        const dayEntries = await db.select().from(timeEntries)
+          .where(and(eq(timeEntries.userId, ctx.user!.userId), eq(timeEntries.date, input.date)))
+          .orderBy(timeEntries.timestamp);
+
+        const lastEntry = dayEntries.at(-1);
+        const allowedNext = getAllowedNextTypes(lastEntry?.type as EntryType | undefined);
+        if (!allowedNext.includes(input.type)) {
+          const allowedText = allowedNext.length > 0 ? allowedNext.join(", ") : "nenhum";
+          throw new Error(`Sequencia de ponto invalida. Proximos tipos permitidos: ${allowedText}.`);
+        }
+
         const result = await db.insert(timeEntries).values({
           userId: ctx.user!.userId,
           ...input,
@@ -215,6 +250,48 @@ export const appRouter = createRouter({
       .mutation(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
         const { id, ...data } = input;
+        const existing = await db.select().from(timeEntries)
+          .where(and(eq(timeEntries.id, id), eq(timeEntries.userId, ctx.user!.userId)))
+          .limit(1);
+        if (existing.length === 0) throw new Error("Registro nao encontrado ou acesso negado");
+
+        const original = existing[0];
+        const targetType = original.type;
+
+        if (original.date === data.date) {
+          const sameDayEntries = await db.select().from(timeEntries)
+            .where(and(eq(timeEntries.userId, ctx.user!.userId), eq(timeEntries.date, data.date)))
+            .orderBy(timeEntries.timestamp);
+          const projected = sameDayEntries
+            .map((entry) => entry.id === id ? { ...entry, ...data } : entry)
+            .sort((a, b) => a.timestamp - b.timestamp);
+
+          if (!isValidEntrySequence(projected)) {
+            throw new Error("Atualizacao invalida: a sequencia de ponto do dia ficaria inconsistente.");
+          }
+        } else {
+          const originalDayEntries = await db.select().from(timeEntries)
+            .where(and(eq(timeEntries.userId, ctx.user!.userId), eq(timeEntries.date, original.date)))
+            .orderBy(timeEntries.timestamp);
+          const projectedOriginalDay = originalDayEntries
+            .filter((entry) => entry.id !== id)
+            .sort((a, b) => a.timestamp - b.timestamp);
+          if (!isValidEntrySequence(projectedOriginalDay)) {
+            throw new Error("Atualizacao invalida: remocao do dia original quebraria a sequencia.");
+          }
+
+          const targetDayEntries = await db.select().from(timeEntries)
+            .where(and(eq(timeEntries.userId, ctx.user!.userId), eq(timeEntries.date, data.date)))
+            .orderBy(timeEntries.timestamp);
+          const projectedTargetDay = [
+            ...targetDayEntries,
+            { ...original, ...data, type: targetType },
+          ].sort((a, b) => a.timestamp - b.timestamp);
+          if (!isValidEntrySequence(projectedTargetDay)) {
+            throw new Error("Atualizacao invalida: a sequencia de ponto do dia de destino ficaria inconsistente.");
+          }
+        }
+
         const result = await db.update(timeEntries)
           .set(data)
           .where(and(eq(timeEntries.id, id), eq(timeEntries.userId, ctx.user!.userId)))
@@ -227,6 +304,22 @@ export const appRouter = createRouter({
       .input(z.object({ id: z.number().positive() }))
       .mutation(async ({ ctx, input }) => {
         const db = createDb(ctx.env.DB);
+        const existing = await db.select().from(timeEntries)
+          .where(and(eq(timeEntries.id, input.id), eq(timeEntries.userId, ctx.user!.userId)))
+          .limit(1);
+        if (existing.length === 0) throw new Error("Registro nao encontrado ou acesso negado");
+
+        const current = existing[0];
+        const dayEntries = await db.select().from(timeEntries)
+          .where(and(eq(timeEntries.userId, ctx.user!.userId), eq(timeEntries.date, current.date)))
+          .orderBy(timeEntries.timestamp);
+        const projected = dayEntries
+          .filter((entry) => entry.id !== input.id)
+          .sort((a, b) => a.timestamp - b.timestamp);
+        if (!isValidEntrySequence(projected)) {
+          throw new Error("Exclusao invalida: a sequencia de ponto do dia ficaria inconsistente.");
+        }
+
         await db.delete(timeEntries)
           .where(and(eq(timeEntries.id, input.id), eq(timeEntries.userId, ctx.user!.userId)));
         return { success: true };

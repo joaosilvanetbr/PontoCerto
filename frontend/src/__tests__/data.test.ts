@@ -5,7 +5,8 @@ import {
   getClockStatus,
   getNextEntryType,
   calculateDayTotal,
-  exportToCSV,
+  isDateWithinRange,
+  getMonthDateRange,
 } from "../lib/data";
 import type { TimeEntry } from "../types";
 
@@ -60,5 +61,46 @@ describe("calculateDayTotal", () => {
   it("should calculate total worked minutes", () => {
     const total = calculateDayTotal(mockEntries, "2024-01-15");
     expect(total).toBe(480);
+  });
+
+  it("should calculate direct journey (in -> out)", () => {
+    const entries: TimeEntry[] = [
+      { id: "1", type: "in", timestamp: new Date(2024, 0, 15, 8, 0).getTime(), date: "2024-01-15" },
+      { id: "2", type: "out", timestamp: new Date(2024, 0, 15, 17, 0).getTime(), date: "2024-01-15" },
+    ];
+    expect(calculateDayTotal(entries, "2024-01-15")).toBe(540);
+  });
+
+  it("should not add invalid totals for incomplete journeys in past dates", () => {
+    const entries: TimeEntry[] = [
+      { id: "1", type: "in", timestamp: new Date(2024, 0, 15, 8, 0).getTime(), date: "2024-01-15" },
+      { id: "2", type: "lunch-out", timestamp: new Date(2024, 0, 15, 12, 0).getTime(), date: "2024-01-15" },
+    ];
+    expect(calculateDayTotal(entries, "2024-01-15")).toBe(240);
+  });
+
+  it("should handle out-of-order input by sorting before calculation", () => {
+    const entries: TimeEntry[] = [
+      { id: "2", type: "out", timestamp: new Date(2024, 0, 15, 17, 0).getTime(), date: "2024-01-15" },
+      { id: "1", type: "in", timestamp: new Date(2024, 0, 15, 8, 0).getTime(), date: "2024-01-15" },
+    ];
+    expect(calculateDayTotal(entries, "2024-01-15")).toBe(540);
+  });
+});
+
+describe("date range helpers", () => {
+  it("should include boundary dates in range checks", () => {
+    expect(isDateWithinRange("2024-02-01", "2024-02-01", "2024-02-29")).toBe(true);
+    expect(isDateWithinRange("2024-02-29", "2024-02-01", "2024-02-29")).toBe(true);
+  });
+
+  it("should return false outside date range", () => {
+    expect(isDateWithinRange("2024-03-01", "2024-02-01", "2024-02-29")).toBe(false);
+  });
+
+  it("should return month start/end range", () => {
+    const range = getMonthDateRange(new Date(2024, 1, 5));
+    expect(range.start).toBe("2024-02-01");
+    expect(range.end).toBe("2024-02-29");
   });
 });

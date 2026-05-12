@@ -10,7 +10,7 @@ import EntryEditor from '@/components/EntryEditor';
 import {
   getTodayString, getClockStatus, calculateDayTotal,
   getNextEntryType, formatTime, formatDuration,
-  getWeekDays, formatFullDate,
+  getWeekDays, formatFullDate, getMonthDateRange, isDateWithinRange,
 } from '@/lib/data';
 import type { TimeEntry } from '@/types';
 
@@ -93,9 +93,8 @@ export default function HomeScreen() {
 
   // Monthly overtime calculation
   const monthlyOvertime = useMemo(() => {
-    const now = new Date();
-    const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const monthEntries = state.entries.filter(e => e.date.startsWith(monthStr));
+    const { start, end } = getMonthDateRange(new Date());
+    const monthEntries = state.entries.filter((entry) => isDateWithinRange(entry.date, start, end));
     const uniqueDays = [...new Set(monthEntries.map(e => e.date))];
     let overtime = 0;
     for (const d of uniqueDays) {

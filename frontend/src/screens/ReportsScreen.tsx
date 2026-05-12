@@ -4,7 +4,7 @@ import { FileText, Share2, TrendingUp, TrendingDown } from 'lucide-react';
 import { useAppState } from '@/context/AppContext';
 import {
   calculateDayTotal, formatDuration, getTodayString,
-  exportToCSV, getWeekDays,
+  exportToCSV, getWeekDateRange, getMonthDateRange, isDateWithinRange,
 } from '@/lib/data';
 
 export default function ReportsScreen() {
@@ -17,13 +17,11 @@ export default function ReportsScreen() {
     let filteredEntries = state.entries;
 
     if (period === 'semana') {
-      const weekDays = getWeekDays();
-      const startDate = weekDays[0].date;
-      const endDate = weekDays[4].date;
-      filteredEntries = state.entries.filter(e => e.date >= startDate && e.date <= endDate);
+      const { start, end } = getWeekDateRange(now);
+      filteredEntries = state.entries.filter((entry) => isDateWithinRange(entry.date, start, end));
     } else {
-      const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      filteredEntries = state.entries.filter(e => e.date.startsWith(monthPrefix));
+      const { start, end } = getMonthDateRange(now);
+      filteredEntries = state.entries.filter((entry) => isDateWithinRange(entry.date, start, end));
     }
 
     const uniqueDays = [...new Set(filteredEntries.map(e => e.date))];
@@ -51,7 +49,7 @@ export default function ReportsScreen() {
     let days: { label: string; date: string }[] = [];
 
     if (period === 'semana') {
-      days = getWeekDays();
+      days = getWeekDateRange(now).days;
     } else {
       const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
       const labels = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31'];

@@ -19,8 +19,28 @@ export function getTodayString(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+export function sortEntriesByTimestamp(entries: TimeEntry[]): TimeEntry[] {
+  return [...entries].sort((a, b) => a.timestamp - b.timestamp);
+}
+
+export function getEntriesByDate(entries: TimeEntry[], date: string): TimeEntry[] {
+  return sortEntriesByTimestamp(entries.filter((entry) => entry.date === date));
+}
+
+export function isDateWithinRange(date: string, start: string, end: string): boolean {
+  return date >= start && date <= end;
+}
+
+export function getMonthDateRange(date = new Date()): { start: string; end: string } {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const start = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+  const end = `${year}-${String(month + 1).padStart(2, '0')}-${String(new Date(year, month + 1, 0).getDate()).padStart(2, '0')}`;
+  return { start, end };
+}
+
 export function getClockStatus(entries: TimeEntry[], date: string): 'off' | 'working' | 'break' {
-  const dayEntries = entries.filter(e => e.date === date).sort((a, b) => a.timestamp - b.timestamp);
+  const dayEntries = getEntriesByDate(entries, date);
   if (dayEntries.length === 0) return 'off';
   const last = dayEntries[dayEntries.length - 1];
   if (last.type === 'in') return 'working';
@@ -30,31 +50,39 @@ export function getClockStatus(entries: TimeEntry[], date: string): 'off' | 'wor
 }
 
 export function calculateDayTotal(entries: TimeEntry[], date: string): number {
-  const dayEntries = entries.filter(e => e.date === date).sort((a, b) => a.timestamp - b.timestamp);
+  const dayEntries = getEntriesByDate(entries, date);
   let total = 0;
+  let workingFrom: number | null = null;
 
-  for (let i = 0; i < dayEntries.length - 1; i++) {
-    const curr = dayEntries[i];
-    const next = dayEntries[i + 1];
-    if (curr.type === 'in' && next.type === 'lunch-out') {
-      total += (next.timestamp - curr.timestamp) / 60000;
+  for (const entry of dayEntries) {
+    if (entry.type === 'in' || entry.type === 'lunch-in') {
+      workingFrom = entry.timestamp;
+      continue;
     }
-    if (curr.type === 'lunch-in' && next.type === 'out') {
-      total += (next.timestamp - curr.timestamp) / 60000;
+
+    if ((entry.type === 'lunch-out' || entry.type === 'out') && workingFrom !== null) {
+      const workedMs = entry.timestamp - workingFrom;
+      if (workedMs > 0) {
+        total += workedMs / 60000;
+      }
+      workingFrom = null;
     }
   }
 
-  // If currently working, add time since clock in
-  const last = dayEntries[dayEntries.length - 1];
-  if (last && (last.type === 'in' || last.type === 'lunch-in') && date === getTodayString()) {
-    total += (Date.now() - last.timestamp) / 60000;
+  // If currently working on the current date, add elapsed time from last start.
+  if (workingFrom !== null && date === getTodayString()) {
+    const openWorkedMs = Date.now() - workingFrom;
+    if (openWorkedMs > 0) {
+      total += openWorkedMs / 60000;
+    }
   }
 
+  if (!Number.isFinite(total) || total < 0) return 0;
   return Math.round(total);
 }
 
 export function getNextEntryType(entries: TimeEntry[], date: string): TimeEntry['type'] | null {
-  const dayEntries = entries.filter(e => e.date === date).sort((a, b) => a.timestamp - b.timestamp);
+  const dayEntries = getEntriesByDate(entries, date);
   if (dayEntries.length === 0) return 'in';
   if (dayEntries.length >= 4) return null;
   const last = dayEntries[dayEntries.length - 1];
@@ -87,8 +115,8 @@ export function formatShortDate(dateStr: string): string {
   return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`;
 }
 
-export function getWeekDays(): { label: string; date: string }[] {
-  const now = new Date();
+export function getWeekDays(date = new Date()): { label: string; date: string }[] {
+  const now = date;
   const dayOfWeek = now.getDay();
   const monday = new Date(now);
   monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
@@ -102,6 +130,15 @@ export function getWeekDays(): { label: string; date: string }[] {
     days.push({ label: labels[i], date: ds });
   }
   return days;
+}
+
+export function getWeekDateRange(date = new Date()): { start: string; end: string; days: { label: string; date: string }[] } {
+  const days = getWeekDays(date);
+  return {
+    start: days[0].date,
+    end: days[days.length - 1].date,
+    days,
+  };
 }
 
 export function getMonthName(month: number, year: number): string {
